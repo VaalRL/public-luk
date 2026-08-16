@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id          String   @id @default(uuid())
+  name        String
+  shortName   String?
+  taxId       String?
+  contactName String?
+  email       String?
+  phone       String?
+  address     String?
+  note        String?
+  logoPath    String?
+  stampPath   String?
+  defaultInvoiceEnabled Boolean @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  bankAccounts BankAccount[]
+  clientInvoices   Invoice[] @relation("ClientInvoices")
+  providerInvoices Invoice[] @relation("ProviderInvoices")
+  overpayments Overpayment[]
+}
+
+model BankAccount {
+  id            String   @id @default(uuid())
+  accountNumber String   // 完整銀行帳號
+  branch        String?  // 分行
+  accountHolder String?  // 戶名
+  currency      String   @default("TWD") // 幣別
+  note          String?  // 備註
+  last5Digits   String   // 保留用於舊資料相容
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  invoices      Invoice[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([accountNumber, companyId])
+  @@index([last5Digits]) // Added
+}
+
+model Invoice {
+  id            String   @id @default(uuid())
+  invoiceNumber String?
+  title         String   @default("報價單")
+  date          DateTime
+  amount        Float
+  taxAmount     Float    @default(0)
+  totalAmount   Float
+  items         String
+  status        String   @default("unpaid")
+  paidAmount    Float    @default(0)
+  companyId     String
+  company       Company  @relation("ClientInvoices", fields: [companyId], references: [id])
+  providerId    String?
+  provider      Company? @relation("ProviderInvoices", fields: [providerId], references: [id])
+  templateId    String   @default("default")
+  issueInvoice  Boolean  @default(true)
+  bankAccountId String?
+  bankAccount   BankAccount? @relation(fields: [bankAccountId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reconciliations ReconciliationRecord[]
+  reminders     InvoiceReminder[]
+
+  @@index([date])
+  @@index([status])
+  @@index([companyId])
+  @@index([providerId]) // Added
+  @@index([status, date])
+}
+
+model InvoiceReminder {
+  id          String   @id @default(uuid())
+  date        DateTime
+  title       String?  // 任務標題
+  description String?  // 任務描述/備註
+  text        String?  // 保留舊欄位以支援遷移
+  invoiceId   String?  // 可選：關聯的帳單 ID
+  invoice     Invoice? @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  completed   Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([date])
+  @@index([completed])
+  @@index([invoiceId])
+}
+
+model BankStatement {
+  id          String   @id @default(uuid())
+  filename    String
+  uploadDate  DateTime @default(now())
+  totalAmount Float?
+  // 結帳期別 (YYYY-MM)。月結時標記而非刪除，保留憑證與稽核能力。
+  closedMonth String?
+  closedAt    DateTime?
+
+  transactions Transaction[]
+
+  @@index([closedMonth])
+}
+
+model Transaction {
+  id              String        @id @default(uuid())
+  date            DateTime
+  description     String?
+  withdrawal      Float         @default(0)
+  deposit         Float         @default(0)
+  balance         Float?
+  note            String?
+  // 手動記錄的付款／資料修復產生的調整分錄沒有對應的銀行對帳單，故為可選。
+  // 這也讓它們不會被月結時的對帳單清除流程 (saveSnapshot) 一併刪除。
+  bankStatementId String?
+  bankStatement   BankStatement? @relation(fields: [bankStatementId], references: [id], onDelete: Cascade)
+  status          String        @default("unmatched")
+  anomalyFlags    String        @default("[]") // JSON array of flags: ["large_amount", "potential_duplicate"]
+  anomalyScore    Float         @default(0)    // 0-100, higher is more suspicious
+  reviewStatus    String        @default("pending") // "pending", "confirmed", "investigating"
+  // 結帳期別 (YYYY-MM)。已結帳的交易不再出現在對帳工作區，但資料保留。
+  closedMonth     String?
+  closedAt        DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  reconciliations ReconciliationRecord[]
+
+  @@index([date])
+  @@index([status])
+  @@index([deposit])
+  @@index([bankStatementId])
+  @@index([status, date])
+  @@index([note]) // Added
+  @@index([closedMonth])
+}
+
+model ReconciliationRecord {
+  id            String       @id @default(uuid())
+  amount        Float
+  date          DateTime     @default(now())
+  invoiceId     String
+  invoice       Invoice      @relation(fields: [invoiceId], references: [id])
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  overpaymentId String?
+  overpayment   Overpayment? @relation(fields: [overpaymentId], references: [id])
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
+
+  @@index([invoiceId])
+  @@index([transactionId])
+  @@index([overpaymentId])
+  @@index([date])
+}
+
+model SystemConfig {
+  id    String @id @default("config")
+  key   String @unique
+  value String
+}
+
+model ParserTemplate {
+  id        String   @id @default(uuid())
+  name      String
+  config    String   // JSON string: { dateCol: number, descCol: number, ... }
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model ReconciliationSnapshot {
+  id        String   @id @default(uuid())
+  month     String   @unique // Format: YYYY-MM
+  data      String   // JSON snapshot of reconciliation state
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model InvoiceItemTemplate {
+  id        String   @id @default(uuid())
+  name      String   @unique
+  quantity  Float    @default(1)
+  price     Float    @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model NotificationTemplate {
+  id        String   @id @default(uuid())
+  type      String   @unique // "payment_reminder" or "payment_confirmed"
+  template  String   // 文案範本，支援變數如 {amount}, {invoiceNumber}, {companyName}
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Overpayment {
+  id            String   @id @default(uuid())
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  last5Digits   String   // 虛擬帳號後五碼
+  amount        Float    // 溢繳金額
+  month         String   // 所屬月份 (YYYY-MM)
+  description   String?  // 說明
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  reconciliations ReconciliationRecord[]
+
+  @@index([month])
+  @@index([companyId])
+}

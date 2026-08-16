@@ -1,0 +1,108 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+/node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+# 注意：測試檔案必須進版控（專案採 TDD），請勿在此忽略 *.test.ts / *.spec.ts
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+/dist-electron
+# Electron 打包的中繼產物（由 prepare-electron.js 產生）與 electron-builder 工具鏈快取
+/electron-dist-temp
+/.cache
+
+# 誤建的巢狀 prisma 目錄（內含資料庫副本）
+/prisma/prisma
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+debug.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (can opt-in for committing if needed)
+.env*
+!.env.example
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# prisma
+/src/generated/prisma
+/prisma/dev.db
+/prisma/dev.db-journal
+/prisma/*.db
+/prisma/*.db-journal
+
+# AI assistants
+/.agent
+/.claude
+/.gemini
+/claude
+CLAUDE.md
+gemini.md
+
+# Test and debug scripts
+check-*.js
+check-*.ts
+test-*.js
+simulate-*.js
+inspect-*.js
+apply-*.js
+*-output.txt
+
+# Test data files
+*.csv
+!public/**/*.csv
+*.xlsx
+!public/**/*.xlsx
+Invoice_*.pdf
+luk-*.png
+
+# Temporary files
+*.tmp
+*.temp
+update-terminology.ps1
+初始需求.md
+實作總結-*.md
+
+# Cleanup script (keep in repo but ignore if modified)
+# cleanup-for-release.ps1
+
+# PDF Backups (自動生成的 PDF 備份)
+/backups/
+backups/
+
+# 使用者上傳的公司 Logo / 印章（屬於營運資料，不進版控）
+/public/uploads/
+
+# 一次性的診斷腳本（開發時手動執行，不屬於專案交付物）
+inspect_excel*.js
+/debug-*.js
+
+# AI 助理工具設定（不屬於專案交付物）
+.mcp.json
+.vscode/
