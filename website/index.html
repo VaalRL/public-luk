@@ -1,0 +1,502 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luk 對帳工具</title>
+<meta name="description" content="讀取銀行明細，依匯款帳號後五碼認出客戶，自動沖銷未結帳款。給小公司的開源對帳工具。">
+<meta property="og:title" content="Luk 對帳工具">
+<meta property="og:description" content="銀行入帳與應收帳款，自動對上。開源、單機、MIT 授權。">
+<meta property="og:type" content="website">
+<link rel="icon" href="img/logo.png">
+<style>
+@font-face{
+  font-family:"Noto Sans TC Local";
+  src:url("fonts/noto-sans-tc-400.woff2") format("woff2");
+  font-weight:400; font-display:swap;
+}
+@font-face{
+  font-family:"Noto Sans TC Local";
+  src:url("fonts/noto-sans-tc-700.woff2") format("woff2");
+  font-weight:700; font-display:swap;
+}
+
+/* ---- tokens: light is the base, complete set ---- */
+:root{
+  --paper:#f6f8f6;
+  --surface:#ffffff;
+  --ink:#0f1412;
+  --muted:#5c6862;
+  --rule:#d3dad5;
+  --rule-strong:#b6c0b9;
+  --settled:#136b41;
+  --settled-wash:#e4f0e9;
+  --open:#9a6414;
+  --open-wash:#f6ecdc;
+  --shadow:0 1px 2px rgba(15,20,18,.05);
+
+  --sans:"Noto Sans TC Local","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+
+  --measure:34rem;
+  --page:min(72rem,100% - 3rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d110f;
+    --surface:#141a17;
+    --ink:#e6ede8;
+    --muted:#8a968f;
+    --rule:#25302a;
+    --rule-strong:#3a4740;
+    --settled:#4fb37b;
+    --settled-wash:#16281f;
+    --open:#c89440;
+    --open-wash:#2a2216;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d110f;
+  --surface:#141a17;
+  --ink:#e6ede8;
+  --muted:#8a968f;
+  --rule:#25302a;
+  --rule-strong:#3a4740;
+  --settled:#4fb37b;
+  --settled-wash:#16281f;
+  --open:#c89440;
+  --open-wash:#2a2216;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+/* grid/flex 子項預設 min-width:auto，內容過寬時會把版面撐開 —— 例如 pre 的最長行。
+   統一允許收縮，並讓寬內容自己捲動，頁面本體永遠不橫向捲。 */
+.hero-grid > *,.start-grid > *,.step > *,.pain > *,.limit > *{min-width:0}
+img,pre{max-width:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:clamp(15px,.4vw + 14px,17px);
+  line-height:1.75;
+  font-feature-settings:"palt" 1;
+}
+.wrap{width:var(--page);margin-inline:auto}
+a{color:inherit}
+:where(a,button):focus-visible{outline:2px solid var(--settled);outline-offset:3px;border-radius:2px}
+
+/* ---- shared type roles ---- */
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0;
+}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2rem,4.4vw,3.15rem);font-weight:700;letter-spacing:-.015em}
+h2{font-size:clamp(1.35rem,2.2vw,1.75rem);font-weight:700}
+h3{font-size:1.02rem;font-weight:700}
+p{margin:0}
+.lead{font-size:clamp(1rem,.7vw + .85rem,1.15rem);color:var(--muted);max-width:var(--measure)}
+
+/* ---- masthead ---- */
+.masthead{
+  border-bottom:1px solid var(--rule);
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(8px);
+}
+.masthead .wrap{display:flex;align-items:center;gap:1.5rem;height:3.75rem}
+.brand{display:flex;align-items:baseline;gap:.55rem;text-decoration:none;font-weight:700;letter-spacing:.02em}
+.brand .mark{
+  font-family:var(--mono);font-size:.95rem;font-weight:700;
+  border:1.5px solid var(--ink);padding:.05em .38em;line-height:1.35;
+}
+.brand .ver{font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:400}
+.masthead nav{margin-left:auto;display:flex;align-items:center;gap:1.4rem}
+.masthead nav a{
+  font-size:.86rem;text-decoration:none;color:var(--muted);
+  padding-block:.2rem;border-bottom:1px solid transparent;
+}
+.masthead nav a:hover{color:var(--ink);border-bottom-color:var(--rule-strong)}
+.masthead nav a.repo{color:var(--ink);font-weight:700}
+@media (max-width:44rem){.nav-hide{display:none}}
+
+/* ---- hero ---- */
+.hero{padding-block:clamp(3rem,7vw,5.5rem) clamp(2.5rem,5vw,4rem)}
+.hero-grid{display:grid;gap:clamp(2.5rem,4vw,3.5rem)}
+@media (min-width:64rem){.hero-grid{grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);align-items:center}}
+.hero-copy{display:flex;flex-direction:column;gap:1.35rem;align-items:flex-start}
+.cta-row{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.3rem}
+.btn{
+  font-family:var(--mono);font-size:.84rem;letter-spacing:.02em;
+  text-decoration:none;padding:.62rem 1.05rem;border:1px solid var(--ink);
+  display:inline-flex;align-items:center;gap:.5rem;transition:background .15s,color .15s;
+}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--settled);border-color:var(--settled)}
+.btn-ghost{color:var(--ink);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--ink)}
+
+/* ---- the ledger: the page's thesis ---- */
+.ledger{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  box-shadow:var(--shadow);
+  padding:1.15rem clamp(1rem,2vw,1.6rem) 1.35rem;
+}
+.ledger-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:.7rem;border-bottom:1.5px solid var(--ink);
+}
+.ledger-side{padding-top:1.15rem}
+.ledger-side + .ledger-side{border-top:1px dashed var(--rule);margin-top:1.15rem}
+.row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:.5rem 1rem;
+  align-items:baseline;padding-block:.42rem;
+}
+.row .date{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.row .what{min-width:0}
+.row .name{display:block;font-size:.92rem}
+.row .memo{display:block;font-family:var(--mono);font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .amt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.95rem;font-weight:700;text-align:right}
+.key{
+  background:var(--settled-wash);color:var(--settled);
+  font-weight:700;padding:.05em .3em;border-radius:2px;
+}
+.tag{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.12em .45em;border:1px solid currentColor;white-space:nowrap;
+}
+.tag-settled{color:var(--settled);background:var(--settled-wash)}
+.match{
+  display:flex;align-items:center;gap:.7rem;
+  margin-top:1.15rem;padding-top:.9rem;border-top:1.5px solid var(--ink);
+  font-family:var(--mono);font-size:.79rem;color:var(--settled);
+}
+.match .bar{flex:1;height:2px;background:var(--settled);transform-origin:left;animation:draw .7s .25s cubic-bezier(.2,.7,.3,1) both}
+.match .verdict{font-weight:700;letter-spacing:.02em}
+@keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.match .bar{animation:none}}
+
+/* ---- sections ---- */
+section{padding-block:clamp(3rem,6vw,4.75rem);border-top:1px solid var(--rule)}
+.sec-head{display:flex;flex-direction:column;gap:.75rem;max-width:var(--measure);margin-bottom:clamp(2rem,3.5vw,2.75rem)}
+
+/* problem */
+.pains{display:grid;gap:0;border-top:1px solid var(--rule)}
+.pain{display:grid;gap:.35rem .9rem;padding-block:1.15rem;border-bottom:1px solid var(--rule)}
+@media (min-width:48rem){.pain{grid-template-columns:13rem 1fr;align-items:start}}
+.pain dt{font-weight:700;font-size:.98rem}
+.pain dd{margin:0;color:var(--muted);max-width:var(--measure)}
+
+/* steps — a real sequence, so numbered */
+.steps{display:grid;gap:0;counter-reset:step;border-top:1px solid var(--rule)}
+.step{
+  display:grid;gap:.4rem 1.1rem;padding-block:1.5rem;border-bottom:1px solid var(--rule);
+  grid-template-columns:auto 1fr;
+}
+@media (min-width:52rem){.step{grid-template-columns:auto 14rem 1fr;align-items:start}}
+.step::before{
+  counter-increment:step;content:counter(step,decimal-leading-zero);
+  font-family:var(--mono);font-size:.78rem;color:var(--settled);padding-top:.28rem;
+}
+.step h3{grid-column:2/-1}
+@media (min-width:52rem){.step h3{grid-column:2}}
+.step p{grid-column:2/-1;color:var(--muted);max-width:var(--measure)}
+@media (min-width:52rem){.step p{grid-column:3}}
+
+/* shots */
+.shots{display:grid;gap:clamp(2rem,3.5vw,3rem)}
+figure{margin:0;display:flex;flex-direction:column;gap:.8rem}
+figure img{
+  width:100%;height:auto;display:block;
+  border:1px solid var(--rule);box-shadow:var(--shadow);background:var(--surface);
+}
+figcaption{display:flex;flex-direction:column;gap:.2rem;max-width:var(--measure)}
+figcaption b{font-size:.95rem}
+figcaption span{color:var(--muted);font-size:.9rem}
+
+/* honest limits */
+.limits{display:grid;gap:0;border-top:1px solid var(--rule)}
+.limit{display:grid;gap:.35rem .9rem;padding-block:1.15rem;border-bottom:1px solid var(--rule)}
+@media (min-width:48rem){.limit{grid-template-columns:auto 1fr;align-items:start}}
+.limit .mark{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--open);padding-top:.3rem;min-width:6.5rem;
+}
+.limit b{display:block;font-size:.98rem}
+.limit p{color:var(--muted);max-width:var(--measure)}
+
+/* start */
+.start-grid{display:grid;gap:clamp(1.75rem,3vw,2.5rem)}
+@media (min-width:56rem){.start-grid{grid-template-columns:1fr 1fr}}
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--rule);
+  padding:1rem 1.15rem;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.85;
+}
+pre .c{color:var(--muted)}
+.reqs{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.reqs li{
+  display:flex;justify-content:space-between;gap:1rem;
+  padding-block:.7rem;border-bottom:1px solid var(--rule);font-size:.93rem;
+}
+.reqs li span:last-child{font-family:var(--mono);font-size:.83rem;color:var(--muted);text-align:right}
+
+/* footer */
+footer{border-top:1px solid var(--rule);padding-block:2.5rem 3.25rem;color:var(--muted);font-size:.87rem}
+.foot-grid{display:flex;flex-wrap:wrap;gap:1.5rem 2.5rem;align-items:baseline;justify-content:space-between}
+.foot-links{display:flex;flex-wrap:wrap;gap:1.25rem}
+footer a{text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+footer a:hover{color:var(--ink)}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mark">Luk</span><span class="ver">對帳工具</span></a>
+    <nav>
+      <a class="nav-hide" href="#how">運作方式</a>
+      <a class="nav-hide" href="#screens">畫面</a>
+      <a class="nav-hide" href="#limits">使用前提</a>
+      <a class="repo" href="https://github.com/VaalRL/public-luk">GitHub ↗</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">開源工具 · 單機執行 · MIT 授權</p>
+        <h1>銀行入帳與應收帳款，<br>自動對上。</h1>
+        <p class="lead">
+          Luk 讀取你的銀行明細，依匯款帳號後五碼認出是哪一家客戶，
+          再用先進先出沖銷未結帳款。原本要開兩個視窗逐筆比對的下午，變成按一次按鈕。
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/VaalRL/public-luk">前往 GitHub</a>
+          <a class="btn btn-ghost" href="#how">看它怎麼運作</a>
+        </div>
+      </div>
+
+      <!-- 這張帳頁就是產品本身的邏輯 -->
+      <div class="ledger" role="img"
+           aria-label="示範：8 月 14 日一筆 95,550 元入帳，摘要含後五碼 12345，對應到晴光科技的未結帳單 DEMO20260804#01，金額相同，自動沖銷完成。">
+        <div class="ledger-head">
+          <p class="eyebrow">自動銷帳</p>
+          <p class="eyebrow">2026 / 08</p>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">銀行明細</p>
+          <div class="row">
+            <span class="date">08/14</span>
+            <span class="what">
+              <span class="name">匯款</span>
+              <span class="memo">ATM轉入 <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">未結帳單</p>
+          <div class="row">
+            <span class="date">08/04</span>
+            <span class="what">
+              <span class="name">晴光科技股份有限公司</span>
+              <span class="memo">DEMO20260804#01 · 後五碼 <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="match">
+          <span class="verdict">已沖銷</span>
+          <span class="bar" aria-hidden="true"></span>
+          <span class="tag tag-settled">結清</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">為什麼做這個</p>
+        <h2>小公司的對帳，卡在同一個地方</h2>
+        <p class="lead">收款用虛擬帳號，銀行明細上只留下後五碼。客戶不會告訴你這筆錢付的是哪一張單。</p>
+      </div>
+      <dl class="pains">
+        <div class="pain">
+          <dt>只有後五碼可以認人</dt>
+          <dd>明細摘要是「ATM轉入 12345」，要先查出這組後五碼屬於哪家公司，才知道這筆錢是誰付的。</dd>
+        </div>
+        <div class="pain">
+          <dt>一筆錢可能付好幾張單</dt>
+          <dd>客戶常常一次匯一筆整數，要自己拆開沖銷多張未結帳單，還得記得剩下的餘額。</dd>
+        </div>
+        <div class="pain">
+          <dt>金額對不上就要翻舊帳</dt>
+          <dd>多收的錢要留到下個月，少收的要追。這些狀態散在 Excel 和記憶裡，換人接手就斷了。</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">運作方式</p>
+        <h2>三個步驟，從明細到結清</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>上傳銀行明細</h3>
+          <p>直接丟銀行匯出的 Excel。第一次使用時用對應畫面指定哪一欄是日期、金額、摘要，之後存成模板重複套用。</p>
+        </div>
+        <div class="step">
+          <h3>自動歸戶與沖銷</h3>
+          <p>從摘要抽出後五碼認出客戶，再依帳單日期先進先出沖銷。多收的錢自動轉為該客戶的溢繳額度，下期可直接扣抵。</p>
+        </div>
+        <div class="step">
+          <h3>月結留痕，不刪憑證</h3>
+          <p>月結只把該期交易標記為已結，不刪除任何憑證。事後要追「這筆錢當初怎麼認的」，記錄都還在。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">實際畫面</p>
+        <h2>看得到帳，也看得到還差多少</h2>
+        <p class="lead">以下畫面使用虛構的示範資料。</p>
+      </div>
+      <div class="shots">
+        <figure>
+          <img src="img/reconciliation.png" width="2400" height="1300" loading="lazy"
+               alt="銷帳作業畫面：上方列出銀行明細的三筆入帳與後五碼，下方列出未結帳單與未付金額，右上角有執行自動銷帳按鈕。">
+          <figcaption>
+            <b>銷帳作業</b>
+            <span>左邊是銀行進來的錢，下面是還沒收到的帳。按下「執行自動銷帳」，兩邊自己對上；認不出來的會留著等你判斷，不會亂猜。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/dashboard.png" width="2400" height="1350" loading="lazy"
+               alt="概覽畫面：本月應收、本月實收、未銷帳等 KPI 卡片，近六個月營收趨勢長條圖，以及待辦事項清單。">
+          <figcaption>
+            <b>概覽</b>
+            <span>本月應收與實收、還沒收回來的金額，以及近六個月的趨勢。待辦提醒直接掛在旁邊。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/invoicing.png" width="2400" height="1250" loading="lazy"
+               alt="立帳管理畫面：帳單列表顯示公司、單號、日期、金額與付款狀態。">
+          <figcaption>
+            <b>立帳管理</b>
+            <span>建立報價單與請款單，自動算稅、產生 PDF，並把應收帳款記進來等著被沖銷。</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">使用前提</p>
+        <h2>先說清楚它不是什麼</h2>
+        <p class="lead">這是一個小公司內部用的單機工具，不是 SaaS。裝之前請確認這些條件你能接受。</p>
+      </div>
+      <div class="limits">
+        <div class="limit">
+          <span class="mark">無帳號</span>
+          <div>
+            <b>沒有登入機制</b>
+            <p>任何能連到這個服務的人都能看到全部帳務，也能刪除資料。請只在自己的電腦上執行，不要放到公開網路。</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">單機</span>
+          <div>
+            <b>資料存在本機的 SQLite</b>
+            <p>沒有雲端同步，也沒有多人協作。換電腦要自己搬檔案，請自行安排定期備份。</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">台灣</span>
+          <div>
+            <b>針對台灣的收款習慣設計</b>
+            <p>對帳邏輯建立在「虛擬帳號後五碼」這個前提上，幣別與稅率預設為新台幣與 5% 營業稅。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">開始使用</p>
+        <h2>從原始碼跑起來</h2>
+      </div>
+      <div class="start-grid">
+        <div>
+<pre><code><span class="c"># 取得原始碼</span>
+git clone https://github.com/VaalRL/public-luk
+cd public-luk
+
+<span class="c"># 安裝與建立資料庫</span>
+npm install
+npx prisma migrate deploy
+
+<span class="c"># 啟動，開 http://localhost:3001</span>
+npm run dev</code></pre>
+        </div>
+        <div>
+          <ul class="reqs">
+            <li><span>執行環境</span><span>Node.js 20+</span></li>
+            <li><span>資料庫</span><span>SQLite（內建）</span></li>
+            <li><span>桌面版打包</span><span>electron-builder</span></li>
+            <li><span>授權</span><span>MIT</span></li>
+          </ul>
+          <p style="margin-top:1.15rem;color:var(--muted);font-size:.9rem;max-width:var(--measure)">
+            <code style="font-family:var(--mono);font-size:.85rem">xlsx</code> 相依套件指向 SheetJS 官方 CDN 而非 npm registry，
+            這是刻意的 —— registry 上的版本停在 2022 年且缺少後續的安全性修復。
+            若你的網路擋住該網域，請先設定 proxy。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <p><strong style="color:var(--ink)">Luk</strong> — 給小公司的開源對帳工具</p>
+      <p style="font-family:var(--mono);font-size:.78rem">MIT License · 介面字型 Noto Sans TC（SIL OFL 1.1）</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/VaalRL/public-luk">原始碼</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/CONTRIBUTING.md">貢獻指南</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/LICENSE">授權條款</a>
+      <a href="https://github.com/VaalRL/public-luk/issues">回報問題</a>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
