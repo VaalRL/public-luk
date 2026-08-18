@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,6 +37,7 @@ type ParserTemplate = {
 };
 
 export function ParserManagement({ initialTemplates }: { initialTemplates: ParserTemplate[] }) {
+    const t = useT();
     const [templates, setTemplates] = useState(initialTemplates);
     const [isCreating, setIsCreating] = useState(false);
     const [selectedTemplate, setSelectedTemplate] = useState<ParserTemplate | null>(null);
@@ -52,7 +54,7 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
     });
 
     const handleDelete = async (id: string) => {
-        if (confirm("確定要刪除此模板嗎？")) {
+        if (confirm(t("parser.deleteConfirm"))) {
             await deleteParserTemplate(id);
             const updatedTemplates = await getParserTemplates();
             setTemplates(updatedTemplates);
@@ -71,11 +73,11 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h2 className="text-2xl font-bold tracking-tight">銀行明細解析管理</h2>
+                <h2 className="text-2xl font-bold tracking-tight">{t("parser.title")}</h2>
                 {!isCreating && (
                     <Button onClick={() => setIsCreating(true)}>
                         <Plus className="w-4 h-4 mr-2" />
-                        新增解析模板
+                        {t("parser.add")}
                     </Button>
                 )}
             </div>
@@ -83,16 +85,16 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
             {isCreating ? (
                 <Card>
                     <CardHeader>
-                        <CardTitle>新增解析模板</CardTitle>
+                        <CardTitle>{t("parser.add")}</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-6">
                         <div className="grid gap-4">
                             <div className="grid gap-2">
-                                <Label>模板名稱</Label>
+                                <Label>{t("parser.templateName")}</Label>
                                 <Input
                                     value={name}
                                     onChange={(e) => setName(e.target.value)}
-                                    placeholder="例如：中國信託 CSV 解析"
+                                    placeholder={t("parser.templateNamePlaceholder")}
                                 />
                             </div>
 
@@ -101,8 +103,8 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                                     if (!name) {
                                         setAlertInfo({
                                             open: true,
-                                            title: "錯誤",
-                                            description: "請輸入模板名稱",
+                                            title: t("common.saveFailed"),
+                                            description: t("parser.nameRequired"),
                                         });
                                         return;
                                     }
@@ -131,8 +133,8 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                                     if (newConfig.depositCol === undefined && newConfig.withdrawalCol === undefined) {
                                         setAlertInfo({
                                             open: true,
-                                            title: "錯誤",
-                                            description: "必須設定存入或支出欄位",
+                                            title: t("common.saveFailed"),
+                                            description: t("parser.columnRequired"),
                                         });
                                         return;
                                     }
@@ -147,22 +149,22 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                                         setIsCreating(false);
                                         setAlertInfo({
                                             open: true,
-                                            title: "成功",
-                                            description: "模板儲存成功",
+                                            title: t("common.saveSuccess"),
+                                            description: t("parser.saved"),
                                         });
                                     } catch (error) {
                                         console.error(error);
                                         setAlertInfo({
                                             open: true,
-                                            title: "錯誤",
-                                            description: "儲存失敗",
+                                            title: t("common.saveFailed"),
+                                            description: t("parser.saveFailed"),
                                         });
                                     }
                                 }}
                             />
 
                             <div className="flex justify-end gap-2">
-                                <Button variant="outline" onClick={() => setIsCreating(false)}>取消</Button>
+                                <Button variant="outline" onClick={() => setIsCreating(false)}>{t("common.cancel")}</Button>
                             </div>
                         </div>
                     </CardContent>
@@ -194,9 +196,9 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                                 </CardHeader>
                                 <CardContent>
                                     <div className="text-xs text-muted-foreground space-y-1 mt-2">
-                                        <p>日期欄位: {conf.dateCol !== undefined ? getColumnLetter(conf.dateCol) : '-'}</p>
-                                        <p>存入金額: {conf.depositCol !== undefined ? getColumnLetter(conf.depositCol) : '-'}</p>
-                                        <p>建立時間: {new Date(template.createdAt).toLocaleDateString()}</p>
+                                        <p>{t("parser.dateColumn")}: {conf.dateCol !== undefined ? getColumnLetter(conf.dateCol) : '-'}</p>
+                                        <p>{t("parser.depositColumn")}: {conf.depositCol !== undefined ? getColumnLetter(conf.depositCol) : '-'}</p>
+                                        <p>{t("parser.createdAt")}: {new Date(template.createdAt).toLocaleDateString()}</p>
                                     </div>
                                 </CardContent>
                             </Card>
@@ -204,7 +206,7 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                     })}
                     {templates.length === 0 && (
                         <div className="col-span-full text-center py-12 text-muted-foreground border-2 border-dashed rounded-lg">
-                            尚無解析模板，請點擊右上角新增
+                            {t("parser.empty")}
                         </div>
                     )}
                 </div>
@@ -213,39 +215,39 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
             <Dialog open={!!selectedTemplate} onOpenChange={(open) => !open && setSelectedTemplate(null)}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>模板詳情：{selectedTemplate?.name}</DialogTitle>
+                        <DialogTitle>{t("parser.detailTitle")}：{selectedTemplate?.name}</DialogTitle>
                     </DialogHeader>
                     {selectedTemplate && (
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
-                                <div className="font-medium">標題列位置</div>
-                                <div>第 {JSON.parse(selectedTemplate.config).headerRow + 1} 列</div>
+                                <div className="font-medium">{t("parser.headerRow")}</div>
+                                <div>{t("parser.rowN", { n: JSON.parse(selectedTemplate.config).headerRow + 1 })}</div>
                             </div>
                             <div className="border rounded-lg overflow-hidden">
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>欄位名稱</TableHead>
-                                            <TableHead>Excel 欄位</TableHead>
+                                            <TableHead>{t("parser.fieldName")}</TableHead>
+                                            <TableHead>{t("parser.excelColumn")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
                                         {(() => {
                                             const conf = JSON.parse(selectedTemplate.config) as ParserConfig;
                                             const mappings = [
-                                                { label: "交易日期", col: conf.dateCol },
-                                                { label: "摘要/說明", col: conf.descriptionCol },
-                                                { label: "存入金額", col: conf.depositCol },
-                                                { label: "支出金額", col: conf.withdrawalCol },
-                                                { label: "餘額", col: conf.balanceCol },
-                                                { label: "備註", col: conf.noteCol },
+                                                { label: t("parser.fieldDate"), col: conf.dateCol },
+                                                { label: t("parser.fieldDescription"), col: conf.descriptionCol },
+                                                { label: t("parser.fieldDeposit"), col: conf.depositCol },
+                                                { label: t("parser.fieldWithdrawal"), col: conf.withdrawalCol },
+                                                { label: t("parser.fieldBalance"), col: conf.balanceCol },
+                                                { label: t("parser.fieldNote"), col: conf.noteCol },
                                             ];
                                             return mappings.map((m, i) => (
                                                 <TableRow key={i}>
                                                     <TableCell>{m.label}</TableCell>
                                                     <TableCell className="font-mono">
                                                         {m.col !== undefined ? (
-                                                            <Badge variant="outline">{getColumnLetter(m.col)} 欄</Badge>
+                                                            <Badge variant="outline">{t("parser.columnLetter", { letter: getColumnLetter(m.col) })}</Badge>
                                                         ) : (
                                                             <span className="text-muted-foreground">-</span>
                                                         )}
@@ -283,7 +285,7 @@ export function ParserManagement({ initialTemplates }: { initialTemplates: Parse
                                 alertInfo.onConfirm();
                             }
                         }}>
-                            確定
+                            {t("parser.confirm")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

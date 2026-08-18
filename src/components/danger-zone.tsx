@@ -23,6 +23,7 @@ import {
     deleteAllData
 } from "@/app/actions/danger-zone";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 
 type DeleteModule = "invoices" | "transactions" | "companies" | "all" | null;
 
@@ -31,6 +32,7 @@ import { Music } from "lucide-react";
 
 export function DangerZone() {
     const { toast } = useToast();
+    const t = useT();
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
     const [moduleToDelete, setModuleToDelete] = useState<DeleteModule>(null);
     const [confirmText, setConfirmText] = useState("");
@@ -42,29 +44,29 @@ export function DangerZone() {
     const modules = [
         {
             id: "invoices" as const,
-            name: "帳單資料",
-            description: "刪除所有帳單、帳單項目和提醒事項",
+            name: t("danger.moduleInvoices"),
+            description: t("danger.moduleInvoicesDescription"),
             confirmWord: "DELETE INVOICES",
             color: "orange",
         },
         {
             id: "transactions" as const,
-            name: "銀行交易資料",
-            description: "刪除所有銀行明細和交易記錄",
+            name: t("danger.moduleTransactions"),
+            description: t("danger.moduleTransactionsDescription"),
             confirmWord: "DELETE TRANSACTIONS",
             color: "orange",
         },
         {
             id: "companies" as const,
-            name: "公司資料",
-            description: "刪除所有公司和銀行帳號資訊（會同時刪除相關帳單）",
+            name: t("danger.moduleCompanies"),
+            description: t("danger.moduleCompaniesDescription"),
             confirmWord: "DELETE COMPANIES",
             color: "red",
         },
         {
             id: "all" as const,
-            name: "全站資料",
-            description: "⚠️ 刪除所有資料，包括公司、帳單、交易記錄等",
+            name: t("danger.moduleAll"),
+            description: t("danger.moduleAllDescription"),
             confirmWord: "DELETE EVERYTHING",
             color: "red",
         },
@@ -106,8 +108,8 @@ export function DangerZone() {
             // 刪除動作現在回傳 ActionResult，失敗時不能再當成成功
             if (result && !result.success) {
                 toast({
-                    title: "刪除失敗",
-                    description: result.error || "刪除失敗，請稍後再試",
+                    title: t("danger.deleteFailed"),
+                    description: result.error || t("danger.deleteFailedDescription"),
                     variant: "destructive",
                 });
                 return;
@@ -119,15 +121,15 @@ export function DangerZone() {
 
             // Show success message
             toast({
-                title: "刪除成功",
-                description: `成功刪除${selectedModule.name}`,
+                title: t("danger.deleted"),
+                description: t("danger.deletedDescription", { name: selectedModule.name }),
             });
             window.location.reload();
         } catch (error) {
             console.error("刪除失敗:", error);
             toast({
-                title: "刪除失敗",
-                description: "刪除失敗，請稍後再試",
+                title: t("danger.deleteFailed"),
+                description: t("danger.deleteFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -160,10 +162,10 @@ export function DangerZone() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-red-700 dark:text-red-400">
                         <AlertTriangle className="w-5 h-5" />
-                        危險區域
+                        {t("danger.title")}
                     </CardTitle>
                     <CardDescription className="text-red-600 dark:text-red-400">
-                        此區域的操作將永久刪除資料，無法復原。請謹慎操作。
+                        {t("danger.description")}
                     </CardDescription>
                 </CardHeader>
             </Card>
@@ -188,7 +190,7 @@ export function DangerZone() {
                                 className="w-full sm:w-auto"
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                刪除{module.name}
+                                {t("danger.deleteModule", { name: module.name })}
                             </Button>
                         </CardContent>
                     </Card>
@@ -200,17 +202,17 @@ export function DangerZone() {
                     <AlertDialogHeader>
                         <AlertDialogTitle className="flex items-center gap-2 text-red-600 dark:text-red-400">
                             <AlertTriangle className="w-5 h-5" />
-                            確認刪除 - {currentModule?.name}
+                            {t("danger.confirmTitle", { name: currentModule?.name ?? "" })}
                         </AlertDialogTitle>
                         <AlertDialogDescription asChild className="space-y-4">
                             <div className="text-muted-foreground text-sm">
                                 <p className="text-red-600 dark:text-red-400 font-semibold">
-                                    ⚠️ 此操作無法復原！
+                                    {t("danger.irreversible")}
                                 </p>
                                 <p>{currentModule?.description}</p>
                                 <div className="space-y-2">
                                     <Label htmlFor="confirm-text">
-                                        請輸入 <code className="bg-muted px-2 py-1 rounded text-sm font-mono">{currentModule?.confirmWord}</code> 以確認：
+                                        {t("danger.typeToConfirm")} <code className="bg-muted px-2 py-1 rounded text-sm font-mono">{currentModule?.confirmWord}</code> {t("danger.typeToConfirmSuffix")}
                                     </Label>
                                     <Input
                                         id="confirm-text"
@@ -225,7 +227,7 @@ export function DangerZone() {
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
 
                         {showSecretButton ? (
                             <Button
@@ -241,7 +243,7 @@ export function DangerZone() {
                                 disabled={!isConfirmValid || isDeleting}
                                 className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                             >
-                                {isDeleting ? "刪除中..." : "確定刪除"}
+                                {isDeleting ? t("danger.deleting") : t("danger.confirmDelete")}
                             </AlertDialogAction>
                         )}
 

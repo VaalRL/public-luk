@@ -19,6 +19,7 @@ import {
     AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 
 type BankAccount = {
     id: string;
@@ -85,6 +86,7 @@ export function CompanyFormFields({
     currentBankAccountRef,
 }: CompanyFormFieldsProps) {
     const { toast } = useToast();
+    const t = useT();
     const [isUploadingLogo, setIsUploadingLogo] = useState(false);
     const [isUploadingStamp, setIsUploadingStamp] = useState(false);
     const [internalNewBankAccount, setInternalNewBankAccount] = useState<BankAccountFormData>({
@@ -149,8 +151,8 @@ export function CompanyFormFields({
             setFormData({ ...formData, logoPath: path });
         } catch {
             toast({
-                title: "上傳失敗",
-                description: "Logo 上傳失敗",
+                title: t("company.uploadFailed"),
+                description: t("company.logoUploadFailed"),
                 variant: "destructive",
             });
         } finally {
@@ -168,8 +170,8 @@ export function CompanyFormFields({
             setFormData({ ...formData, stampPath: path });
         } catch {
             toast({
-                title: "上傳失敗",
-                description: "簽章上傳失敗",
+                title: t("company.uploadFailed"),
+                description: t("company.stampUploadFailed"),
                 variant: "destructive",
             });
         } finally {
@@ -181,7 +183,7 @@ export function CompanyFormFields({
     const handleAddBankAccountToPending = () => {
         if (!newBankAccount.accountNumber.trim()) {
             toast({
-                title: "請輸入銀行帳號",
+                title: t("company.accountRequired"),
                 variant: "destructive",
             });
             return;
@@ -200,8 +202,8 @@ export function CompanyFormFields({
         });
 
         toast({
-            title: "已新增到待儲存列表",
-            description: "請點擊下方按鈕儲存所有變更",
+            title: t("company.addedToPending"),
+            description: t("company.addedToPendingDescription"),
         });
     };
 
@@ -224,8 +226,8 @@ export function CompanyFormFields({
             }
         } catch {
             toast({
-                title: "刪除失敗",
-                description: "刪除銀行帳號失敗",
+                title: t("company.deleteFailed"),
+                description: t("company.accountDeleteFailed"),
                 variant: "destructive",
             });
         } finally {
@@ -238,10 +240,10 @@ export function CompanyFormFields({
         <div className="space-y-6">
             {/* 基本資訊 */}
             <div className="space-y-4">
-                <h3 className="font-semibold">基本資訊</h3>
+                <h3 className="font-semibold">{t("company.basicInfo")}</h3>
                 <div className="grid grid-cols-2 gap-4">
                     <div>
-                        <Label htmlFor="name">公司名稱 *</Label>
+                        <Label htmlFor="name">{t("company.name")} *</Label>
                         <Input
                             id="name"
                             required
@@ -250,16 +252,16 @@ export function CompanyFormFields({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="shortName">公司簡稱</Label>
+                        <Label htmlFor="shortName">{t("company.shortName")}</Label>
                         <Input
                             id="shortName"
                             value={formData.shortName}
                             onChange={(e) => setFormData({ ...formData, shortName: e.target.value })}
-                            placeholder="例：台積電"
+                            placeholder={t("company.shortNamePlaceholder")}
                         />
                     </div>
                     <div>
-                        <Label htmlFor="taxId">統一編號</Label>
+                        <Label htmlFor="taxId">{t("company.taxId")}</Label>
                         <Input
                             id="taxId"
                             value={formData.taxId}
@@ -267,7 +269,7 @@ export function CompanyFormFields({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="contactName">聯絡人</Label>
+                        <Label htmlFor="contactName">{t("company.contact")}</Label>
                         <Input
                             id="contactName"
                             value={formData.contactName}
@@ -284,7 +286,7 @@ export function CompanyFormFields({
                         />
                     </div>
                     <div>
-                        <Label htmlFor="phone">電話</Label>
+                        <Label htmlFor="phone">{t("company.phone")}</Label>
                         <Input
                             id="phone"
                             value={formData.phone}
@@ -292,7 +294,7 @@ export function CompanyFormFields({
                         />
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="address">地址</Label>
+                        <Label htmlFor="address">{t("company.address")}</Label>
                         <Input
                             id="address"
                             value={formData.address}
@@ -300,12 +302,12 @@ export function CompanyFormFields({
                         />
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="note">公司筆記</Label>
+                        <Label htmlFor="note">{t("company.note")}</Label>
                         <Input
                             id="note"
                             value={formData.note}
                             onChange={(e) => setFormData({ ...formData, note: e.target.value })}
-                            placeholder="備註事項..."
+                            placeholder={t("company.notePlaceholder")}
                         />
                     </div>
                     <div className="col-span-2 flex items-center space-x-2">
@@ -316,19 +318,19 @@ export function CompanyFormFields({
                             onChange={(e) => setFormData({ ...formData, defaultInvoiceEnabled: e.target.checked })}
                             className="h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary"
                         />
-                        <Label htmlFor="defaultInvoiceEnabled" className="cursor-pointer">預設開發票</Label>
+                        <Label htmlFor="defaultInvoiceEnabled" className="cursor-pointer">{t("company.defaultIssueInvoice")}</Label>
                     </div>
                 </div>
             </div>
 
             {/* 銀行帳號管理 */}
             <div className="space-y-4">
-                <h3 className="font-semibold">銀行帳號</h3>
+                <h3 className="font-semibold">{t("company.bankAccounts")}</h3>
 
                 {/* 現有已儲存帳號列表 */}
                 {bankAccounts.length > 0 && (
                     <div>
-                        <p className="text-xs text-muted-foreground mb-2">已儲存的帳號：</p>
+                        <p className="text-xs text-muted-foreground mb-2">{t("company.savedAccounts")}</p>
                         <div className="flex flex-wrap gap-2">
                             {bankAccounts.map((account) => (
                                 <Badge
@@ -344,7 +346,7 @@ export function CompanyFormFields({
                                         type="button"
                                         onClick={() => handleDeleteBankAccountClick(account.id)}
                                         className="ml-1 hover:text-destructive"
-                                        title="刪除帳號"
+                                        title={t("company.deleteAccount")}
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -357,7 +359,7 @@ export function CompanyFormFields({
                 {/* 待儲存帳號列表 */}
                 {pendingBankAccounts.length > 0 && (
                     <div>
-                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">待儲存的帳號（點擊下方儲存按鈕後生效）：</p>
+                        <p className="text-xs text-amber-600 dark:text-amber-400 mb-2">{t("company.pendingAccounts")}</p>
                         <div className="flex flex-wrap gap-2">
                             {pendingBankAccounts.map((account, index) => (
                                 <Badge
@@ -373,7 +375,7 @@ export function CompanyFormFields({
                                         type="button"
                                         onClick={() => handleRemovePendingAccount(index)}
                                         className="ml-1 hover:text-destructive"
-                                        title="移除"
+                                        title={t("company.removeAccount")}
                                     >
                                         <X className="w-3 h-3" />
                                     </button>
@@ -386,34 +388,34 @@ export function CompanyFormFields({
                 {/* 新增帳號表單 */}
                 <div className="grid grid-cols-12 gap-2 items-end">
                     <div className="col-span-3">
-                        <Label htmlFor="accountNumber">銀行帳號 *</Label>
+                        <Label htmlFor="accountNumber">{t("company.accountNumber")} *</Label>
                         <Input
                             id="accountNumber"
-                            placeholder="完整帳號"
+                            placeholder={t("company.accountNumberPlaceholder")}
                             value={newBankAccount.accountNumber}
                             onChange={(e) => setNewBankAccount({ ...newBankAccount, accountNumber: e.target.value })}
                         />
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="branch">分行</Label>
+                        <Label htmlFor="branch">{t("company.branch")}</Label>
                         <Input
                             id="branch"
-                            placeholder="例：台北分行"
+                            placeholder={t("company.branchPlaceholder")}
                             value={newBankAccount.branch}
                             onChange={(e) => setNewBankAccount({ ...newBankAccount, branch: e.target.value })}
                         />
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="accountHolder">戶名</Label>
+                        <Label htmlFor="accountHolder">{t("company.accountHolder")}</Label>
                         <Input
                             id="accountHolder"
-                            placeholder="戶名"
+                            placeholder={t("company.accountHolder")}
                             value={newBankAccount.accountHolder}
                             onChange={(e) => setNewBankAccount({ ...newBankAccount, accountHolder: e.target.value })}
                         />
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="currency">幣別</Label>
+                        <Label htmlFor="currency">{t("company.currency")}</Label>
                         <Select
                             value={newBankAccount.currency}
                             onValueChange={(value) => setNewBankAccount({ ...newBankAccount, currency: value })}
@@ -422,15 +424,15 @@ export function CompanyFormFields({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="TWD">新台幣 (TWD)</SelectItem>
+                                <SelectItem value="TWD">{t("company.currencyTwd")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="col-span-2">
-                        <Label htmlFor="note">備註</Label>
+                        <Label htmlFor="note">{t("company.accountNote")}</Label>
                         <Input
                             id="note"
-                            placeholder="備註"
+                            placeholder={t("company.accountNote")}
                             value={newBankAccount.note}
                             onChange={(e) => setNewBankAccount({ ...newBankAccount, note: e.target.value })}
                         />
@@ -442,7 +444,7 @@ export function CompanyFormFields({
                             onClick={handleAddBankAccountToPending}
                             disabled={!newBankAccount.accountNumber}
                             className="w-full"
-                            title="新增到待儲存列表"
+                            title={t("company.addToPending")}
                         >
                             <Plus className="w-4 h-4" />
                         </Button>
@@ -455,11 +457,11 @@ export function CompanyFormFields({
 
             {/* 圖片上傳 */}
             <div className="space-y-4">
-                <h3 className="font-semibold">圖片設定</h3>
+                <h3 className="font-semibold">{t("company.images")}</h3>
                 <div className="grid grid-cols-2 gap-6">
                     {/* Logo */}
                     <div className="space-y-2">
-                        <Label>公司 Logo</Label>
+                        <Label>{t("company.logo")}</Label>
                         <input
                             ref={logoInputRef}
                             type="file"
@@ -485,7 +487,7 @@ export function CompanyFormFields({
                                         onClick={() => logoInputRef.current?.click()}
                                         disabled={isUploadingLogo}
                                     >
-                                        {isUploadingLogo ? "上傳中..." : "更換 Logo"}
+                                        {isUploadingLogo ? t("company.uploading") : t("company.replaceLogo")}
                                     </Button>
                                 </div>
                             ) : (
@@ -498,7 +500,7 @@ export function CompanyFormFields({
                                         disabled={isUploadingLogo}
                                     >
                                         <Upload className="w-4 h-4 mr-2" />
-                                        {isUploadingLogo ? "上傳中..." : "上傳 Logo"}
+                                        {isUploadingLogo ? t("company.uploading") : t("company.uploadLogo")}
                                     </Button>
                                 </div>
                             )}
@@ -507,7 +509,7 @@ export function CompanyFormFields({
 
                     {/* Stamp */}
                     <div className="space-y-2">
-                        <Label>公司簽章</Label>
+                        <Label>{t("company.stamp")}</Label>
                         <input
                             ref={stampInputRef}
                             type="file"
@@ -533,7 +535,7 @@ export function CompanyFormFields({
                                         onClick={() => stampInputRef.current?.click()}
                                         disabled={isUploadingStamp}
                                     >
-                                        {isUploadingStamp ? "上傳中..." : "更換簽章"}
+                                        {isUploadingStamp ? t("company.uploading") : t("company.replaceStamp")}
                                     </Button>
                                 </div>
                             ) : (
@@ -546,7 +548,7 @@ export function CompanyFormFields({
                                         disabled={isUploadingStamp}
                                     >
                                         <Upload className="w-4 h-4 mr-2" />
-                                        {isUploadingStamp ? "上傳中..." : "上傳簽章"}
+                                        {isUploadingStamp ? t("company.uploading") : t("company.uploadStamp")}
                                     </Button>
                                 </div>
                             )}
@@ -554,7 +556,7 @@ export function CompanyFormFields({
                     </div>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                    * 圖片將用於 PDF 報價單生成{!isEditMode && "（可稍後編輯公司時上傳）"}
+                    * 圖片將用於 PDF 報價單生成{!isEditMode && t("company.uploadLater")}
                 </p>
             </div>
 
@@ -563,13 +565,13 @@ export function CompanyFormFields({
             }}>
                 <AlertDialogContent onClick={(e) => e.stopPropagation()}>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                        <AlertDialogTitle>{t("company.deleteAccount")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            確定要刪除此銀行帳號嗎？
+                            {t("company.deleteAccountConfirm")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>取消</AlertDialogCancel>
+                        <AlertDialogCancel onClick={(e) => e.stopPropagation()}>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={(e) => {
                                 e.stopPropagation();
@@ -577,7 +579,7 @@ export function CompanyFormFields({
                             }}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            刪除
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

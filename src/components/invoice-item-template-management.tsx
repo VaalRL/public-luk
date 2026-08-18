@@ -16,6 +16,7 @@ import {
 import { Plus, Trash2 } from "lucide-react";
 import { createInvoiceItemTemplate, deleteInvoiceItemTemplate } from "@/app/actions/invoice-item-template";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -36,6 +37,7 @@ type InvoiceItemTemplate = {
 
 export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTemplates: InvoiceItemTemplate[] }) {
     const { toast } = useToast();
+    const t = useT();
     const [templates, setTemplates] = useState(initialTemplates);
     const [newItem, setNewItem] = useState<{ name: string; quantity: string | number; price: string | number }>({ name: "", quantity: "1", price: "0" });
     const [isAdding, setIsAdding] = useState(false);
@@ -47,7 +49,7 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
     const handleAdd = async () => {
         if (!newItem.name.trim()) {
             toast({
-                title: "請輸入項目名稱",
+                title: t("itemTemplate.nameRequired"),
                 variant: "destructive",
             });
             return;
@@ -66,8 +68,8 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
         } catch (error) {
             console.error(error);
             toast({
-                title: "新增失敗",
-                description: "新增項目失敗",
+                title: t("itemTemplate.addFailed"),
+                description: t("itemTemplate.addFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -89,8 +91,8 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
         } catch (error) {
             console.error(error);
             toast({
-                title: "刪除失敗",
-                description: "刪除項目失敗",
+                title: t("itemTemplate.deleteFailed"),
+                description: t("itemTemplate.deleteFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -126,8 +128,8 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
         } catch (error) {
             console.error(error);
             toast({
-                title: "更新失敗",
-                description: "更新項目失敗",
+                title: t("itemTemplate.updateFailed"),
+                description: t("itemTemplate.updateFailedDescription"),
                 variant: "destructive",
             });
         }
@@ -136,20 +138,20 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
     return (
         <Card>
             <CardHeader>
-                <CardTitle>帳單項目管理</CardTitle>
+                <CardTitle>{t("itemTemplate.title")}</CardTitle>
             </CardHeader>
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end border-b pb-6">
                     <div className="md:col-span-2">
-                        <Label>新增項目名稱</Label>
+                        <Label>{t("itemTemplate.newName")}</Label>
                         <Input
                             value={newItem.name}
                             onChange={(e) => setNewItem({ ...newItem, name: e.target.value })}
-                            placeholder="例如：網站設計"
+                            placeholder={t("itemTemplate.namePlaceholder")}
                         />
                     </div>
                     <div>
-                        <Label>預設數量</Label>
+                        <Label>{t("itemTemplate.defaultQuantity")}</Label>
                         <Input
                             type="number"
                             value={newItem.quantity}
@@ -157,7 +159,7 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
                         />
                     </div>
                     <div>
-                        <Label>預設單價</Label>
+                        <Label>{t("itemTemplate.defaultPrice")}</Label>
                         <Input
                             type="number"
                             value={newItem.price}
@@ -167,25 +169,25 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
                     <div className="md:col-span-4 flex justify-end">
                         <Button onClick={handleAdd} disabled={isAdding}>
                             <Plus className="w-4 h-4 mr-2" />
-                            新增項目
+                            {t("itemTemplate.add")}
                         </Button>
                     </div>
                 </div>
 
                 <div>
-                    <Label className="mb-2 block">現有項目 ({templates.length})</Label>
+                    <Label className="mb-2 block">{t("itemTemplate.existing", { n: templates.length })}</Label>
                     {templates.length === 0 ? (
                         <p className="text-sm text-muted-foreground text-center py-8">
-                            尚無項目，請新增第一個項目
+                            {t("itemTemplate.empty")}
                         </p>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[40%]">項目名稱</TableHead>
-                                    <TableHead className="w-[15%]">數量</TableHead>
-                                    <TableHead className="w-[20%]">單價</TableHead>
-                                    <TableHead className="w-[25%]">操作</TableHead>
+                                    <TableHead className="w-[40%]">{t("itemTemplate.name")}</TableHead>
+                                    <TableHead className="w-[15%]">{t("itemTemplate.quantity")}</TableHead>
+                                    <TableHead className="w-[20%]">{t("itemTemplate.price")}</TableHead>
+                                    <TableHead className="w-[25%]">{t("itemTemplate.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -215,8 +217,8 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
                                                 </TableCell>
                                                 <TableCell>
                                                     <div className="flex gap-2">
-                                                        <Button size="sm" onClick={() => saveEdit(template.id)}>儲存</Button>
-                                                        <Button size="sm" variant="ghost" onClick={cancelEdit}>取消</Button>
+                                                        <Button size="sm" onClick={() => saveEdit(template.id)}>{t("common.save")}</Button>
+                                                        <Button size="sm" variant="ghost" onClick={cancelEdit}>{t("common.cancel")}</Button>
                                                     </div>
                                                 </TableCell>
                                             </>
@@ -232,7 +234,7 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
                                                             size="sm"
                                                             onClick={() => startEdit(template)}
                                                         >
-                                                            編輯
+                                                            {t("common.edit")}
                                                         </Button>
                                                         <Button
                                                             variant="ghost"
@@ -256,15 +258,15 @@ export function InvoiceItemTemplateManagement({ initialTemplates }: { initialTem
             <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                        <AlertDialogTitle>{t("itemTemplate.confirmDelete")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            確定要刪除此項目嗎？
+                            {t("itemTemplate.deleteConfirm")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            刪除
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

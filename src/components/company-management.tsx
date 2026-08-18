@@ -12,6 +12,7 @@ import {
     deleteBankAccount,
 } from "@/app/actions/company";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -38,6 +39,7 @@ interface CompanyManagementProps {
 
 export function CompanyManagement({ initialCompanies }: CompanyManagementProps) {
     const { toast } = useToast();
+    const t = useT();
 
     // Zustand store
     const {
@@ -185,8 +187,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
                 setIsDialogOpen(false);
                 resetForm();
                 toast({
-                    title: currentCompany ? "更新成功" : "建立成功",
-                    description: currentCompany ? "公司資料已更新" : "公司已建立",
+                    title: currentCompany ? t("company.updated") : t("company.created"),
+                    description: currentCompany ? t("company.updatedDescription") : t("company.createdDescription"),
                 });
 
                 // Update store
@@ -197,7 +199,7 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
                 window.location.reload();
             } else {
                 toast({
-                    title: currentCompany ? "更新失敗" : "建立失敗",
+                    title: currentCompany ? t("company.updateFailed") : t("company.createFailed"),
                     description: result.error,
                     variant: "destructive",
                 });
@@ -205,8 +207,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
         } catch (error) {
             console.error(error);
             toast({
-                title: "錯誤",
-                description: "操作失敗，請稍後再試",
+                title: t("common.saveFailed"),
+                description: t("company.operationFailed"),
                 variant: "destructive",
             });
         }
@@ -237,8 +239,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
             isOpen: true,
             type: "company",
             id,
-            title: "刪除公司",
-            description: "確定要刪除此公司嗎？此操作無法復原。",
+            title: t("company.deleteTitle"),
+            description: t("company.deleteConfirm"),
         });
     };
 
@@ -253,8 +255,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
         if (result.success) {
             setDeleteConfirmation({ ...deleteConfirmation, isOpen: false });
             toast({
-                title: "刪除成功",
-                description: "資料已刪除",
+                title: t("company.deleted"),
+                description: t("company.deletedDescription"),
             });
 
             // Update store
@@ -265,7 +267,7 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
             window.location.reload();
         } else {
             toast({
-                title: "刪除失敗",
+                title: t("company.deleteFailed"),
                 description: result.error,
                 variant: "destructive",
             });
@@ -283,7 +285,7 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
         if (!addingAccountForCompany) return;
         if (!bankAccountFormData.accountNumber) {
             toast({
-                title: "請輸入銀行帳號",
+                title: t("company.accountRequired"),
                 variant: "destructive",
             });
             return;
@@ -302,13 +304,13 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
             setIsBankAccountDialogOpen(false);
             resetBankAccountForm();
             toast({
-                title: "新增成功",
-                description: "銀行帳號已新增",
+                title: t("company.accountAdded"),
+                description: t("company.accountAddedDescription"),
             });
             window.location.reload();
         } else {
             toast({
-                title: "新增失敗",
+                title: t("company.accountAddFailed"),
                 description: result.error,
                 variant: "destructive",
             });
@@ -325,8 +327,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
     }) => {
         if (!currentCompany?.id) {
             toast({
-                title: "錯誤",
-                description: "請先儲存公司資料",
+                title: t("common.saveFailed"),
+                description: t("company.saveCompanyFirst"),
                 variant: "destructive",
             });
             return;
@@ -343,13 +345,13 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
 
         if (result.success) {
             toast({
-                title: "新增成功",
-                description: "銀行帳號已新增",
+                title: t("company.accountAdded"),
+                description: t("company.accountAddedDescription"),
             });
             window.location.reload();
         } else {
             toast({
-                title: "新增失敗",
+                title: t("company.accountAddFailed"),
                 description: result.error,
                 variant: "destructive",
             });
@@ -363,13 +365,13 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
 
         if (result.success) {
             toast({
-                title: "刪除成功",
-                description: "銀行帳號已刪除",
+                title: t("company.deleted"),
+                description: t("company.accountDeleted"),
             });
             window.location.reload();
         } else {
             toast({
-                title: "刪除失敗",
+                title: t("company.deleteFailed"),
                 description: result.error,
                 variant: "destructive",
             });
@@ -383,11 +385,11 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
                 <CardHeader className="flex flex-row items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <Building2 className="h-5 w-5" />
-                        公司管理
+                        {t("company.title")}
                     </CardTitle>
                     <Button onClick={() => setIsDialogOpen(true)}>
                         <Plus className="h-4 w-4 mr-2" />
-                        新增公司
+                        {t("company.add")}
                     </Button>
                 </CardHeader>
                 <CardContent>
@@ -452,8 +454,8 @@ export function CompanyManagement({ initialCompanies }: CompanyManagementProps) 
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
-                        <AlertDialogAction onClick={confirmDelete}>確定刪除</AlertDialogAction>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
+                        <AlertDialogAction onClick={confirmDelete}>{t("company.confirmDelete")}</AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
             </AlertDialog>

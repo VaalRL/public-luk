@@ -7,6 +7,7 @@ import { Download, Upload, Loader2, AlertTriangle } from "lucide-react";
 import { importData } from "@/app/actions/backup";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -25,6 +26,7 @@ export function DataBackup() {
     const [pendingFile, setPendingFile] = useState<File | null>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { toast } = useToast();
+    const t = useT();
 
     const handleExport = async () => {
         setIsExporting(true);
@@ -48,14 +50,14 @@ export function DataBackup() {
             document.body.removeChild(a);
 
             toast({
-                title: "匯出成功",
-                description: "系統資料已成功匯出",
+                title: t("backup.exported"),
+                description: t("backup.exportedDescription"),
             });
         } catch (error) {
             console.error("Export failed:", error);
             toast({
-                title: "匯出失敗",
-                description: "請稍後再試",
+                title: t("backup.exportFailed"),
+                description: t("common.retryLater"),
                 variant: "destructive",
             });
         } finally {
@@ -83,8 +85,8 @@ export function DataBackup() {
             await importData(data);
 
             toast({
-                title: "匯入成功",
-                description: "系統將重新整理以套用變更",
+                title: t("backup.imported"),
+                description: t("backup.importedDescription"),
             });
 
             setTimeout(() => {
@@ -93,8 +95,8 @@ export function DataBackup() {
         } catch (error) {
             console.error("Import failed:", error);
             toast({
-                title: "匯入失敗",
-                description: "資料格式錯誤或系統異常",
+                title: t("backup.importFailed"),
+                description: t("backup.importFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -114,17 +116,17 @@ export function DataBackup() {
         <>
             <Card>
                 <CardHeader>
-                    <CardTitle>資料備份與還原</CardTitle>
+                    <CardTitle>{t("backup.title")}</CardTitle>
                     <CardDescription>
-                        匯出系統完整資料以進行備份，或從備份檔還原資料。
+                        {t("backup.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-6">
                     <Alert variant="destructive">
                         <AlertTriangle className="h-4 w-4" />
-                        <AlertTitle>注意</AlertTitle>
+                        <AlertTitle>{t("backup.warningTitle")}</AlertTitle>
                         <AlertDescription>
-                            匯入功能將會<span className="font-bold">完全覆蓋</span>目前的系統資料，請謹慎使用。建議在匯入前先執行匯出備份。
+                            {t("backup.warningBefore")}<span className="font-bold">{t("backup.warningStrong")}</span>{t("backup.warningAfter")}
                         </AlertDescription>
                     </Alert>
 
@@ -139,7 +141,7 @@ export function DataBackup() {
                             ) : (
                                 <Download className="mr-2 h-4 w-4" />
                             )}
-                            匯出系統資料
+                            {t("backup.exportButton")}
                         </Button>
 
                         <div className="flex-1">
@@ -161,7 +163,7 @@ export function DataBackup() {
                                 ) : (
                                     <Upload className="mr-2 h-4 w-4" />
                                 )}
-                                匯入還原資料
+                                {t("backup.importButton")}
                             </Button>
                         </div>
                     </div>
@@ -171,20 +173,20 @@ export function DataBackup() {
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認還原資料？</AlertDialogTitle>
+                        <AlertDialogTitle>{t("backup.confirmTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            此操作將會<span className="font-bold text-destructive">清除並覆蓋</span>目前系統中的所有資料！
+                            {t("backup.confirmBefore")}<span className="font-bold text-destructive">{t("backup.confirmClear")}</span>{t("backup.confirmAfter")}
                             <br />
-                            建議您在執行此操作前先備份目前的資料。
+                            {t("backup.confirmBackupFirst")}
                             <br />
                             <br />
-                            確定要繼續嗎？
+                            {t("backup.confirmContinue")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel onClick={handleCancelImport}>取消</AlertDialogCancel>
+                        <AlertDialogCancel onClick={handleCancelImport}>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmImport} className="bg-destructive hover:bg-destructive/90">
-                            確認還原
+                            {t("backup.confirmRestore")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
