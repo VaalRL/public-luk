@@ -4,6 +4,7 @@ import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { useT } from "@/lib/i18n/context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import {
@@ -54,6 +55,7 @@ export function ReconciliationInterface({
     overpayments?: Overpayment[];
 }) {
     // Get initial tab from URL hash
+    const t = useT();
     const [activeTab, setActiveTab] = React.useState<string>(() => {
         if (typeof window !== 'undefined') {
             const hash = window.location.hash.slice(1);
@@ -118,7 +120,7 @@ export function ReconciliationInterface({
                     className="bg-green-50 text-green-700 border-green-200"
                 >
                     <CheckCircle2 className="w-3 h-3 mr-1" />
-                    已銷帳
+                    {t("reconciliation.ui.settled")}
                 </Badge>
             );
         }
@@ -129,12 +131,13 @@ export function ReconciliationInterface({
                     className="bg-orange-50 text-orange-700 border-orange-200"
                 >
                     <AlertCircle className="w-3 h-3 mr-1" />
-                    需確認
+                    {t("reconciliation.ui.needsReview")}
                 </Badge>
             );
         }
-        return <Badge variant="secondary">未銷帳</Badge>;
-    }, []);
+        return <Badge variant="secondary">{t("reconciliation.ui.unsettled")}</Badge>;
+        // t 會隨語言改變，必須列入相依，否則切語言後這幾個徽章仍是舊語言
+    }, [t]);
 
     const getMatchedInvoices = React.useCallback((tx: Transaction) => {
         if (!tx.reconciliations || tx.reconciliations.length === 0) return null;
@@ -145,7 +148,7 @@ export function ReconciliationInterface({
                     <div key={rec.id} className="text-sm flex items-center gap-2">
                         <Check className="w-3 h-3 text-green-600" />
                         <span>
-                            {rec.invoice?.company?.name || "未知公司"} - {rec.invoice?.invoiceNumber || "-"}
+                            {rec.invoice?.company?.name || t("reconciliation.ui.unknownCompany")} - {rec.invoice?.invoiceNumber || "-"}
                         </span>
                         <span className="text-muted-foreground">
                             (${rec.amount.toLocaleString()})
@@ -154,7 +157,8 @@ export function ReconciliationInterface({
                 ))}
             </div>
         );
-    }, []);
+        // 同上：t 會隨語言改變
+    }, [t]);
 
     // Filter invoices for display
     // Filter invoices for display
@@ -180,7 +184,7 @@ export function ReconciliationInterface({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogAction onClick={closeDialog}>
-                            確定
+                            {t("reconciliation.ui.removeConfirmTitle")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -193,17 +197,17 @@ export function ReconciliationInterface({
             >
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認移除</AlertDialogTitle>
+                        <AlertDialogTitle>{t("reconciliation.ui.confirmRemove")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            確定要移除當前顯示的 {transactions.length} 筆交易嗎？
+                            {t("reconciliation.ui.removeConfirmBody", { n: transactions.length })}
                             <br />
-                            這將會刪除相關的銀行明細檔案記錄。
+                            {t("reconciliation.ui.removeConfirmNote")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={handleConfirmDelete}>
-                            確定移除
+                            {t("reconciliation.ui.removeConfirm")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>
@@ -220,8 +224,8 @@ export function ReconciliationInterface({
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2 mb-6">
-                    <TabsTrigger value="work">銷帳作業</TabsTrigger>
-                    <TabsTrigger value="summary">銷帳統整</TabsTrigger>
+                    <TabsTrigger value="work">{t("reconciliation.ui.tabWork")}</TabsTrigger>
+                    <TabsTrigger value="summary">{t("reconciliation.ui.tabSummary")}</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="work" className="space-y-6">
@@ -248,7 +252,7 @@ export function ReconciliationInterface({
                                             <span className="sr-only">Toggle</span>
                                         </Button>
                                     </CollapsibleTrigger>
-                                    <CardTitle>銀行明細</CardTitle>
+                                    <CardTitle>{t("reconciliation.ui.bankStatement")}</CardTitle>
                                 </div>
                                 <ReconciliationActions
                                     isEditing={isEditing}
@@ -299,7 +303,7 @@ export function ReconciliationInterface({
                                             <span className="sr-only">Toggle</span>
                                         </Button>
                                     </CollapsibleTrigger>
-                                    <CardTitle>未結帳單</CardTitle>
+                                    <CardTitle>{t("reconciliation.ui.openInvoices")}</CardTitle>
                                 </div>
                             </CardHeader>
                             <CollapsibleContent>
@@ -315,17 +319,17 @@ export function ReconciliationInterface({
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2 text-green-700 dark:text-green-400">
                                     <CheckCircle2 className="w-5 h-5" />
-                                    可用溢繳款項 (將於自動銷帳時優先使用)
+                                    {t("reconciliation.ui.availableCredit")}
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Table>
                                     <TableHeader>
                                         <TableRow>
-                                            <TableHead>公司名稱</TableHead>
-                                            <TableHead>帳號後五碼</TableHead>
-                                            <TableHead className="text-right">金額</TableHead>
-                                            <TableHead>說明</TableHead>
+                                            <TableHead>{t("reconciliation.ui.companyName")}</TableHead>
+                                            <TableHead>{t("reconciliation.ui.last5")}</TableHead>
+                                            <TableHead className="text-right">{t("reconciliation.ui.amount")}</TableHead>
+                                            <TableHead>{t("reconciliation.ui.description")}</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>

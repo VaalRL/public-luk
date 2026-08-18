@@ -29,6 +29,7 @@ import { generateNotificationMessage } from "@/lib/notification-utils";
 import { NotificationMessage } from "@/components/notification-message";
 import { addInvoiceReminder } from "@/app/actions/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import {} from "@/lib/utils";
 import { format } from "date-fns";
 import { zhTW } from "date-fns/locale";
@@ -51,6 +52,7 @@ function SummaryTable({
     toggleInvoiceMark,
 }: SummaryTableProps) {
     const { toast } = useToast();
+    const t = useT();
 
     // Get appropriate template
     const templateType =
@@ -62,15 +64,15 @@ function SummaryTable({
         try {
             await addInvoiceReminder(invoiceId, date);
             toast({
-                title: "已新增待辦提醒",
+                title: t("reconciliation.ui.reminderAdded"),
                 description: format(date, "yyyy/MM/dd", { locale: zhTW }),
             });
         } catch (error) {
             console.error(error);
             toast({
                 variant: "destructive",
-                title: "新增提醒失敗",
-                description: "請稍後再試",
+                title: t("reconciliation.ui.reminderFailed"),
+                description: t("common.retryLater"),
             });
         }
     };
@@ -96,12 +98,12 @@ function SummaryTable({
                     <TableHeader>
                         <TableRow>
                             <TableHead className="w-[50px]"></TableHead>
-                            <TableHead>公司</TableHead>
-                            <TableHead>帳單號碼</TableHead>
-                            <TableHead>日期</TableHead>
-                            <TableHead className="text-right">總額</TableHead>
-                            <TableHead className="text-right">未付</TableHead>
-                            <TableHead className="w-[250px]">通知文案</TableHead>
+                            <TableHead>{t("reconciliation.ui.company")}</TableHead>
+                            <TableHead>{t("reconciliation.ui.invoiceNumber")}</TableHead>
+                            <TableHead>{t("reconciliation.ui.date")}</TableHead>
+                            <TableHead className="text-right">{t("reconciliation.ui.total")}</TableHead>
+                            <TableHead className="text-right">{t("reconciliation.ui.unpaid")}</TableHead>
+                            <TableHead className="w-[250px]">{t("reconciliation.ui.notificationText")}</TableHead>
                             <TableHead className="w-[50px]"></TableHead>
                         </TableRow>
                     </TableHeader>
@@ -112,7 +114,7 @@ function SummaryTable({
                                     colSpan={8}
                                     className="text-center text-muted-foreground"
                                 >
-                                    無資料
+                                    {t("reconciliation.ui.noData")}
                                 </TableCell>
                             </TableRow>
                         ) : (
@@ -136,7 +138,7 @@ function SummaryTable({
                                         amount: type === "paid" ? invoice.totalAmount : unpaidAmount,
                                         invoiceNumber:
                                             invoice.invoiceNumber || invoice.id.slice(0, 8),
-                                        companyName: invoice.company?.name || "未知公司",
+                                        companyName: invoice.company?.name || t("reconciliation.ui.unknownCompany"),
                                         date: invoice.date,
                                     })
                                     : "";
@@ -179,7 +181,7 @@ function SummaryTable({
                                                 />
                                             ) : (
                                                 <div className="text-xs text-muted-foreground">
-                                                    請至設定頁面設定通知文案
+                                                    {t("reconciliation.ui.setNotificationTemplate")}
                                                 </div>
                                             )}
                                         </TableCell>
@@ -229,10 +231,12 @@ export function ReconciliationSummary({
     markedInvoiceIds,
     toggleInvoiceMark,
 }: ReconciliationSummaryProps) {
+    const t = useT();
+
     return (
         <div className="space-y-6">
             <SummaryTable
-                title="已銷帳"
+                title={t("reconciliation.ui.settled")}
                 data={paidInvoices}
                 type="paid"
                 notificationTemplates={notificationTemplates}
@@ -245,7 +249,7 @@ export function ReconciliationSummary({
             {/* Let's remove it to be clean. */}
 
             <SummaryTable
-                title="未銷帳"
+                title={t("reconciliation.ui.unsettled")}
                 data={openInvoices}
                 type="unpaid"
                 notificationTemplates={notificationTemplates}
@@ -259,22 +263,22 @@ export function ReconciliationSummary({
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-blue-700 dark:text-blue-400">
                         <CheckCircle2 className="w-5 h-5" />
-                        溢繳款項 ({overpayments.length})
+                        {t("reconciliation.ui.overpayments")} ({overpayments.length})
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
                     {overpayments.length === 0 ? (
                         <div className="text-center py-8 text-muted-foreground">
-                            目前無溢繳款項
+                            {t("reconciliation.ui.noOverpayments")}
                         </div>
                     ) : (
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead>公司</TableHead>
-                                    <TableHead>虛擬帳號後五碼</TableHead>
-                                    <TableHead className="text-right">溢繳金額</TableHead>
-                                    <TableHead>說明</TableHead>
+                                    <TableHead>{t("reconciliation.ui.company")}</TableHead>
+                                    <TableHead>{t("reconciliation.ui.virtualLast5")}</TableHead>
+                                    <TableHead className="text-right">{t("reconciliation.ui.overpaidAmount")}</TableHead>
+                                    <TableHead>{t("reconciliation.ui.description")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>

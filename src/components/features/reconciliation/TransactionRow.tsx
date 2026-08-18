@@ -3,6 +3,7 @@
 import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n/context";
 import { Transaction } from "./types";
 
 interface TransactionRowProps {
@@ -26,6 +27,7 @@ export const TransactionRow = React.memo(function TransactionRow({
     getStatus,
     getMatchedInvoices,
 }: TransactionRowProps) {
+    const t = useT();
     // Memoize handlers
     const handleClick = React.useCallback(() => {
         if (!isEditing) {
@@ -67,10 +69,10 @@ export const TransactionRow = React.memo(function TransactionRow({
                 {isEditing ? (
                     <div className="flex flex-col gap-2 min-w-[150px]">
                         <div className="text-sm text-muted-foreground">
-                            摘要: {transaction.description || "-"}
+                            {t("reconciliation.ui.memo")}: {transaction.description || "-"}
                         </div>
                         <div className="flex items-center gap-2">
-                            <span className="text-sm whitespace-nowrap">後五碼:</span>
+                            <span className="text-sm whitespace-nowrap">{t("reconciliation.ui.last5Short")}:</span>
                             <Input
                                 placeholder="00000"
                                 value={

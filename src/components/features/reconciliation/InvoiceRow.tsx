@@ -4,12 +4,14 @@ import React from "react";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Invoice } from "./types";
+import { useT } from "@/lib/i18n/context";
 
 interface InvoiceRowProps {
     invoice: Invoice;
 }
 
 export const InvoiceRow = React.memo(function InvoiceRow({ invoice }: InvoiceRowProps) {
+    const t = useT();
     // Memoize calculations
     const outstanding = React.useMemo(() => {
         return Math.round(invoice.totalAmount - invoice.paidAmount);
@@ -38,13 +40,13 @@ export const InvoiceRow = React.memo(function InvoiceRow({ invoice }: InvoiceRow
             <TableCell>
                 <div className="flex flex-wrap gap-1">
                     {!invoice.company?.bankAccounts || invoice.company.bankAccounts.length === 0 ? (
-                        <span className="text-sm text-muted-foreground">無帳號</span>
+                        <span className="text-sm text-muted-foreground">{t("reconciliation.ui.noAccount")}</span>
                     ) : (
                         invoice.company.bankAccounts.map((acc, idx) => (
                             <Badge
                                 key={acc.last5Digits}
                                 variant="secondary"
-                                title={`收款帳號 ${idx + 1}`}
+                                title={t("reconciliation.ui.receivingAccount", { n: idx + 1 })}
                             >
                                 {acc.last5Digits}
                             </Badge>

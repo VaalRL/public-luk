@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 import {
     Table,
     TableBody,
@@ -33,6 +34,7 @@ export function InvoiceItemsTable({
     applyTemplate,
     addItem,
 }: InvoiceItemsTableProps) {
+    const t = useT();
     const serviceItems = items.filter((item) => item.type === "service");
     const reimbursementItems = items.filter((item) => item.type === "reimbursement");
 
@@ -41,7 +43,7 @@ export function InvoiceItemsTable({
             {/* 服務項目 */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">服務項目</h3>
+                    <h3 className="text-lg font-semibold">{t("invoicing.items.service")}</h3>
                     <Button
                         type="button"
                         variant="outline"
@@ -50,27 +52,27 @@ export function InvoiceItemsTable({
                         disabled={isFormDisabled}
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        新增服務項目
+                        {t("invoicing.form.addService")}
                     </Button>
                 </div>
                 <div className="border rounded-lg overflow-hidden">
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead className="w-[200px]">項目名稱</TableHead>
-                                <TableHead className="w-[250px]">內容</TableHead>
-                                <TableHead className="w-[100px]">數量</TableHead>
-                                <TableHead className="w-[120px]">單價</TableHead>
-                                <TableHead className="w-[120px]">金額</TableHead>
-                                <TableHead className="w-[200px]">備註</TableHead>
-                                <TableHead className="w-[80px]">操作</TableHead>
+                                <TableHead className="w-[200px]">{t("invoicing.items.name")}</TableHead>
+                                <TableHead className="w-[250px]">{t("invoicing.items.content")}</TableHead>
+                                <TableHead className="w-[100px]">{t("invoicing.items.quantity")}</TableHead>
+                                <TableHead className="w-[120px]">{t("invoicing.items.price")}</TableHead>
+                                <TableHead className="w-[120px]">{t("invoicing.items.amount")}</TableHead>
+                                <TableHead className="w-[200px]">{t("invoicing.items.note")}</TableHead>
+                                <TableHead className="w-[80px]">{t("invoicing.items.actions")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {serviceItems.length === 0 ? (
                                 <TableRow>
                                     <td colSpan={7} className="text-center py-8 text-muted-foreground">
-                                        尚無服務項目，點擊上方按鈕新增
+                                        {t("invoicing.form.noServiceRows")}
                                     </td>
                                 </TableRow>
                             ) : (
@@ -100,7 +102,7 @@ export function InvoiceItemsTable({
             {/* 代墊項目 */}
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-lg font-semibold">代墊項目</h3>
+                    <h3 className="text-lg font-semibold">{t("invoicing.items.reimbursement")}</h3>
                     <Button
                         type="button"
                         variant="outline"
@@ -109,7 +111,7 @@ export function InvoiceItemsTable({
                         disabled={isFormDisabled}
                     >
                         <Plus className="w-4 h-4 mr-2" />
-                        新增代墊項目
+                        {t("invoicing.form.addReimbursement")}
                     </Button>
                 </div>
                 {reimbursementItems.length > 0 && (
@@ -117,13 +119,13 @@ export function InvoiceItemsTable({
                         <Table>
                             <TableHeader>
                                 <TableRow>
-                                    <TableHead className="w-[200px]">項目名稱</TableHead>
-                                    <TableHead className="w-[250px]">內容</TableHead>
-                                    <TableHead className="w-[100px]">數量</TableHead>
-                                    <TableHead className="w-[120px]">單價</TableHead>
-                                    <TableHead className="w-[120px]">金額</TableHead>
-                                    <TableHead className="w-[200px]">備註</TableHead>
-                                    <TableHead className="w-[80px]">操作</TableHead>
+                                    <TableHead className="w-[200px]">{t("invoicing.items.name")}</TableHead>
+                                    <TableHead className="w-[250px]">{t("invoicing.items.content")}</TableHead>
+                                    <TableHead className="w-[100px]">{t("invoicing.items.quantity")}</TableHead>
+                                    <TableHead className="w-[120px]">{t("invoicing.items.price")}</TableHead>
+                                    <TableHead className="w-[120px]">{t("invoicing.items.amount")}</TableHead>
+                                    <TableHead className="w-[200px]">{t("invoicing.items.note")}</TableHead>
+                                    <TableHead className="w-[80px]">{t("invoicing.items.actions")}</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -149,7 +151,7 @@ export function InvoiceItemsTable({
                 {reimbursementItems.length === 0 && (
                     <div className="border rounded-lg overflow-hidden bg-muted/30">
                         <div className="text-center py-8 text-muted-foreground">
-                            尚無代墊項目，點擊上方按鈕新增
+                            {t("invoicing.form.noReimbursementRows")}
                         </div>
                     </div>
                 )}

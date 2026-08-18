@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { FileText, ArrowLeft, CheckCircle } from "lucide-react";
 import { InvoiceDownloadButton } from "@/components/invoice-download-button";
 import { useInvoiceForm } from "@/hooks/use-invoice-form";
+import { useT } from "@/lib/i18n/context";
 import {
     InvoiceFormHeader,
     InvoiceItemsTable,
@@ -37,6 +38,7 @@ export function InvoiceForm({
     onSuccess,
     onCancel,
 }: InvoiceFormProps) {
+    const t = useT();
     const {
         form,
         state,
@@ -96,10 +98,10 @@ export function InvoiceForm({
                         <CheckCircle className="w-12 h-12 text-green-600 dark:text-green-400" />
                     </div>
                     <h3 className="text-2xl font-bold text-green-800 dark:text-green-300">
-                        帳單已儲存！
+                        {t("invoicing.form.saved")}
                     </h3>
                     <p className="text-green-700 dark:text-green-400">
-                        單號:{" "}
+                        {t("invoicing.form.savedNumber")}{" "}
                         {savedInvoice.invoiceNumber || savedInvoice.id.slice(0, 8)}
                     </p>
 
@@ -114,7 +116,7 @@ export function InvoiceForm({
                             variant="outline"
                             onClick={resetForm}
                         >
-                            建立新帳單 / 返回列表
+                            {t("invoicing.form.createAnother")}
                         </Button>
                     </div>
                 </CardContent>
@@ -139,7 +141,7 @@ export function InvoiceForm({
                         </Button>
                     )}
                     <FileText className="w-5 h-5" />
-                    {initialData ? "編輯帳單" : "建立帳單"}
+                    {initialData ? t("invoicing.form.editTitle") : t("invoicing.form.createTitle")}
                 </CardTitle>
             </CardHeader>
             <CardContent>

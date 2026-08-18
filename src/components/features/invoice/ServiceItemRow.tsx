@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n/context";
 import { TableCell, TableRow } from "@/components/ui/table";
 import {
     Command,
@@ -42,6 +43,7 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
     removeItem,
     applyTemplate,
 }: ServiceItemRowProps) {
+    const t = useT();
     const [open, setOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState("");
 
@@ -144,14 +146,14 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
                             className="w-full justify-between font-normal"
                             disabled={isFormDisabled}
                         >
-                            {item.name || "選擇或輸入項目"}
+                            {item.name || t("invoicing.items.selectOrType")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[300px] p-0">
                         <Command>
                             <CommandInput
-                                placeholder="搜尋或輸入..."
+                                placeholder={t("invoicing.items.searchOrType")}
                                 onValueChange={setSearchTerm}
                             />
                             <CommandList>
@@ -161,12 +163,12 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
                                         onClick={handleCreateNew}
                                     >
                                         <Plus className="w-4 h-4" />
-                                        使用 &quot;{searchTerm}&quot;
+                                        {t("invoicing.form.useTyped")} &quot;{searchTerm}&quot;
                                     </div>
                                     <div className="p-2 border-t mt-1">
                                         <Button variant="outline" size="sm" asChild className="w-full">
                                             <Link href="/settings?tab=invoice-items">
-                                                前往新增品項
+                                                {t("invoicing.form.goAddItem")}
                                             </Link>
                                         </Button>
                                     </div>
@@ -192,7 +194,7 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
                                     <Button variant="ghost" size="sm" asChild className="w-full justify-start h-8">
                                         <Link href="/settings?tab=invoice-items">
                                             <Plus className="mr-2 h-3 w-3" />
-                                            管理品項模板
+                                            {t("invoicing.form.manageItemTemplates")}
                                         </Link>
                                     </Button>
                                 </div>
@@ -205,7 +207,7 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
                 <Input
                     value={item.content || item.description || ""}
                     onChange={handleContentChange}
-                    placeholder="輸入內容"
+                    placeholder={t("invoicing.items.enterContent")}
                     disabled={isFormDisabled}
                 />
             </TableCell>
@@ -242,7 +244,7 @@ export const ServiceItemRow = React.memo(function ServiceItemRow({
                 <Input
                     value={item.note || ""}
                     onChange={handleNoteChange}
-                    placeholder="備註"
+                    placeholder={t("invoicing.items.note")}
                     disabled={isFormDisabled}
                 />
             </TableCell>

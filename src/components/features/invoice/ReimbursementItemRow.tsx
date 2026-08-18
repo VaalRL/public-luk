@@ -3,6 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useT } from "@/lib/i18n/context";
 import { TableCell, TableRow } from "@/components/ui/table";
 import { Trash2 } from "lucide-react";
 import { InvoiceItem } from "./types";
@@ -22,6 +23,7 @@ export const ReimbursementItemRow = React.memo(function ReimbursementItemRow({
     updateItem,
     removeItem,
 }: ReimbursementItemRowProps) {
+    const t = useT();
     // Local state for price input to allow typing negative numbers
     const [localPrice, setLocalPrice] = useState(item.price.toString());
     const isEditingPrice = useRef(false);
@@ -109,7 +111,7 @@ export const ReimbursementItemRow = React.memo(function ReimbursementItemRow({
                 <Input
                     value={item.name || ""}
                     onChange={handleNameChange}
-                    placeholder="項目名稱"
+                    placeholder={t("invoicing.items.name")}
                     disabled={isFormDisabled}
                 />
             </TableCell>
@@ -117,7 +119,7 @@ export const ReimbursementItemRow = React.memo(function ReimbursementItemRow({
                 <Input
                     value={item.content || item.description || ""}
                     onChange={handleContentChange}
-                    placeholder="輸入內容"
+                    placeholder={t("invoicing.items.enterContent")}
                     disabled={isFormDisabled}
                 />
             </TableCell>
@@ -154,7 +156,7 @@ export const ReimbursementItemRow = React.memo(function ReimbursementItemRow({
                 <Input
                     value={item.note || ""}
                     onChange={handleNoteChange}
-                    placeholder="備註"
+                    placeholder={t("invoicing.items.note")}
                     disabled={isFormDisabled}
                 />
             </TableCell>

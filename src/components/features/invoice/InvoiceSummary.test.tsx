@@ -1,10 +1,11 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithLocale } from '@/test/i18n';
 import { InvoiceSummary } from './InvoiceSummary';
 
 describe('InvoiceSummary', () => {
     it('should render service subtotal', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -20,7 +21,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should render tax with correct rate', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -36,7 +37,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should render service total', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -54,7 +55,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should render reimbursement total when present', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -70,7 +71,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should not render reimbursement when zero', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -85,7 +86,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should render correct grand total', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={1000}
                 serviceTax={50}
@@ -101,7 +102,7 @@ describe('InvoiceSummary', () => {
     });
 
     it('should handle zero values', () => {
-        render(
+        renderWithLocale(
             <InvoiceSummary
                 serviceSubtotal={0}
                 serviceTax={0}

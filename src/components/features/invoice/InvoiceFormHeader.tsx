@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n/context";
 import {
 } from "@/components/ui/select";
 import {
@@ -68,6 +69,7 @@ export function InvoiceFormHeader({
     onTitleChange,
     onIssueInvoiceChange,
 }: InvoiceFormHeaderProps) {
+    const t = useT();
     const selectedCompany = companies.find((c) => c.id === companyId);
     const selectedProvider = companies.find((c) => c.id === providerId);
 
@@ -75,7 +77,7 @@ export function InvoiceFormHeader({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {/* 客戶公司 */}
             <div className="space-y-2">
-                <Label>客戶公司 *</Label>
+                <Label>{t("invoicing.form.customer")} *</Label>
                 <Popover open={openCompany} onOpenChange={setOpenCompany}>
                     <PopoverTrigger asChild>
                         <Button
@@ -84,20 +86,20 @@ export function InvoiceFormHeader({
                             aria-expanded={openCompany}
                             className="w-full justify-between"
                         >
-                            {selectedCompany ? selectedCompany.name : "選擇客戶公司"}
+                            {selectedCompany ? selectedCompany.name : t("invoicing.form.selectCustomer")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0">
                         <Command>
-                            <CommandInput placeholder="搜尋公司..." />
+                            <CommandInput placeholder={t("invoicing.form.searchCompany")} />
                             <CommandList>
                                 <CommandEmpty>
                                     <div className="flex flex-col items-center gap-2 p-2">
-                                        <p className="text-sm text-muted-foreground">找不到公司</p>
+                                        <p className="text-sm text-muted-foreground">{t("invoicing.form.noCompanyFound")}</p>
                                         <Button variant="outline" size="sm" asChild className="w-full">
                                             <Link href="/settings">
-                                                前往新增公司
+                                                {t("invoicing.form.goAddCompany")}
                                             </Link>
                                         </Button>
                                     </div>
@@ -126,7 +128,7 @@ export function InvoiceFormHeader({
                                     <Button variant="ghost" size="sm" asChild className="w-full justify-start h-8">
                                         <Link href="/settings">
                                             <Plus className="mr-2 h-3 w-3" />
-                                            管理公司資料
+                                            {t("invoicing.form.manageCompanies")}
                                         </Link>
                                     </Button>
                                 </div>
@@ -138,7 +140,7 @@ export function InvoiceFormHeader({
 
             {/* 服務提供商 */}
             <div className="space-y-2">
-                <Label>服務提供商</Label>
+                <Label>{t("invoicing.form.provider")}</Label>
                 <Popover open={openProvider} onOpenChange={setOpenProvider}>
                     <PopoverTrigger asChild>
                         <Button
@@ -147,20 +149,20 @@ export function InvoiceFormHeader({
                             aria-expanded={openProvider}
                             className="w-full justify-between"
                         >
-                            {selectedProvider ? selectedProvider.name : "選擇服務提供商"}
+                            {selectedProvider ? selectedProvider.name : t("invoicing.form.selectProvider")}
                             <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-[400px] p-0">
                         <Command>
-                            <CommandInput placeholder="搜尋公司..." />
+                            <CommandInput placeholder={t("invoicing.form.searchCompany")} />
                             <CommandList>
                                 <CommandEmpty>
                                     <div className="flex flex-col items-center gap-2 p-2">
-                                        <p className="text-sm text-muted-foreground">找不到公司</p>
+                                        <p className="text-sm text-muted-foreground">{t("invoicing.form.noCompanyFound")}</p>
                                         <Button variant="outline" size="sm" asChild className="w-full">
                                             <Link href="/settings">
-                                                前往新增公司
+                                                {t("invoicing.form.goAddCompany")}
                                             </Link>
                                         </Button>
                                     </div>
@@ -189,7 +191,7 @@ export function InvoiceFormHeader({
                                     <Button variant="ghost" size="sm" asChild className="w-full justify-start h-8">
                                         <Link href="/settings">
                                             <Plus className="mr-2 h-3 w-3" />
-                                            管理公司資料
+                                            {t("invoicing.form.manageCompanies")}
                                         </Link>
                                     </Button>
                                 </div>
@@ -201,7 +203,7 @@ export function InvoiceFormHeader({
 
             {/* 日期 */}
             <div className="space-y-2">
-                <Label>日期 *</Label>
+                <Label>{t("invoicing.form.date")} *</Label>
                 <Popover>
                     <PopoverTrigger asChild>
                         <Button
@@ -212,7 +214,7 @@ export function InvoiceFormHeader({
                             )}
                         >
                             <CalendarIcon className="mr-2 h-4 w-4" />
-                            {date ? format(date, "yyyy/MM/dd") : <span>選擇日期</span>}
+                            {date ? format(date, "yyyy/MM/dd") : <span>{t("invoicing.form.selectDate")}</span>}
                         </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -228,22 +230,22 @@ export function InvoiceFormHeader({
 
             {/* 帳單號碼 */}
             <div className="space-y-2">
-                <Label>帳單號碼</Label>
+                <Label>{t("invoicing.form.invoiceNumber")}</Label>
                 <Input
                     value={invoiceNumber}
                     onChange={(e) => onInvoiceNumberChange(e.target.value)}
-                    placeholder="自動生成"
+                    placeholder={t("invoicing.form.autoGenerated")}
                 />
             </div>
 
             {/* 標題與開立發票 */}
             <div className="space-y-2 md:col-span-2">
-                <Label>標題 *</Label>
+                <Label>{t("invoicing.form.documentTitle")} *</Label>
                 <div className="flex items-center gap-4">
                     <Input
                         value={title}
                         onChange={(e) => onTitleChange(e.target.value)}
-                        placeholder="報價單"
+                        placeholder={t("pdfTemplate.labels.documentTitle")}
                         className="flex-1"
                     />
                     <div className="flex items-center space-x-2 whitespace-nowrap">
@@ -259,7 +261,7 @@ export function InvoiceFormHeader({
                             htmlFor="issueInvoice"
                             className="cursor-pointer text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
                         >
-                            開立發票 (未開發票時稅率為 0%)
+                            {t("invoicing.form.issueInvoice")}
                         </label>
                     </div>
                 </div>

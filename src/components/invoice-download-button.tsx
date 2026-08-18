@@ -3,6 +3,7 @@
 import React, { useEffect, useState } from "react";
 import _dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 import { Download, Loader2, AlertTriangle } from "lucide-react";
 import { InvoicePdfDocument } from "@/components/invoice-pdf";
 import { pdf } from "@react-pdf/renderer";
@@ -63,6 +64,7 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
     const [cachedBlob, setCachedBlob] = useState<Blob | null>(null);
     const [cacheKey, setCacheKey] = useState<string>('');
     const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+    const t = useT();
     const [template, setTemplate] = useState<PdfTemplate>(sharedTemplate);
 
     // 只為了「是否超過一頁」的估算；共用快取，整頁按鈕合計只讀一次
@@ -251,7 +253,7 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
 
         } catch (error) {
             console.error("Error generating PDF:", error);
-            alert("PDF 生成失敗，請稍後再試");
+            alert(t("invoicing.download.generateFailed"));
         } finally {
             setIsGenerating(false);
         }
@@ -267,7 +269,7 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
                                 <AlertTriangle className="w-4 h-4 text-yellow-500 cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent>
-                                <p>內容可能超過一頁</p>
+                                <p>{t("invoicing.download.mayExceedOnePage")}</p>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
@@ -284,22 +286,22 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
                     ) : (
                         <Download className="w-4 h-4" />
                     )}
-                    <span className="sr-only">下載 PDF</span>
+                    <span className="sr-only">{t("invoicing.download.label")}</span>
                 </Button>
             </div>
 
             <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認下載</AlertDialogTitle>
+                        <AlertDialogTitle>{t("invoicing.download.confirmTitle")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            此帳單內容較多，可能會超過一頁 PDF。確定要繼續下載嗎？
+                            {t("invoicing.download.confirmDescription")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={generateAndDownload}>
-                            確定下載
+                            {t("invoicing.download.confirmDownload")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

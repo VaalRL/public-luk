@@ -4,6 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n/context";
 import { Plus, Trash2 } from "lucide-react";
 import { InvoiceReminder } from "./types";
 
@@ -18,6 +19,7 @@ export function InvoiceReminderSection({
     isFormDisabled,
     onRemindersChange,
 }: InvoiceReminderSectionProps) {
+    const t = useT();
     const addReminder = () => {
         const newReminder: InvoiceReminder = {
             id: `temp-${Date.now()}`,
@@ -41,7 +43,7 @@ export function InvoiceReminderSection({
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <Label>提醒事項 (選填)</Label>
+                <Label>{t("invoicing.form.reminderSection")}</Label>
                 <Button
                     type="button"
                     variant="outline"
@@ -50,14 +52,14 @@ export function InvoiceReminderSection({
                     disabled={isFormDisabled}
                 >
                     <Plus className="w-4 h-4 mr-2" />
-                    新增提醒
+                    {t("invoicing.form.addReminder")}
                 </Button>
             </div>
 
             <div className="space-y-3">
                 {reminders.length === 0 ? (
                     <div className="text-sm text-muted-foreground text-center py-4 border rounded-lg border-dashed">
-                        尚無提醒事項
+                        {t("invoicing.form.noReminders")}
                     </div>
                 ) : (
                     reminders.map((reminder, index) => (
@@ -80,7 +82,7 @@ export function InvoiceReminderSection({
                                 />
                                 <Input
                                     type="text"
-                                    placeholder="提醒內容 (例如：請款、催款、確認收款等)"
+                                    placeholder={t("invoicing.form.reminderPlaceholder")}
                                     value={reminder.text || ""}
                                     onChange={(e) => updateReminder(index, { text: e.target.value })}
                                     disabled={isFormDisabled}

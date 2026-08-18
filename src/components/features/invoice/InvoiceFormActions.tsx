@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 
 interface InvoiceFormActionsProps {
     isSubmitting: boolean;
@@ -14,6 +15,7 @@ export function InvoiceFormActions({
     isFormDisabled,
     onCancel,
 }: InvoiceFormActionsProps) {
+    const t = useT();
     return (
         <div className="flex justify-end gap-4">
             {onCancel && (
@@ -23,11 +25,11 @@ export function InvoiceFormActions({
                     onClick={onCancel}
                     disabled={isSubmitting}
                 >
-                    取消
+                    {t("common.cancel")}
                 </Button>
             )}
             <Button type="submit" disabled={isSubmitting || isFormDisabled}>
-                {isSubmitting ? "儲存中..." : "儲存帳單"}
+                {isSubmitting ? t("invoicing.form.saving") : t("invoicing.form.submit")}
             </Button>
         </div>
     );

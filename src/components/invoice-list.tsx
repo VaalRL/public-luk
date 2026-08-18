@@ -35,6 +35,7 @@ import { format } from "date-fns";
 import { InvoiceDownloadButton } from "@/components/invoice-download-button";
 import { InvoiceReminderManager } from "@/components/invoice-reminder-manager";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Invoice = {
@@ -88,6 +89,7 @@ interface InvoiceListProps {
 
 export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
     const { toast } = useToast();
+    const t = useT();
     const [invoiceFilter, setInvoiceFilter] = useState<string>("all");
     const [monthFilter, setMonthFilter] = useState<string>("all");
     const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -109,13 +111,13 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
             setDeleteDialogOpen(false);
             setInvoiceToDelete(null);
             toast({
-                title: "刪除成功",
-                description: "帳單已成功刪除",
+                title: t("invoicing.list.deleted"),
+                description: t("invoicing.list.deletedDescription"),
             });
             window.location.reload();
         } else {
             toast({
-                title: "刪除失敗",
+                title: t("invoicing.list.deleteFailed"),
                 description: result.error,
                 variant: "destructive",
             });
@@ -126,11 +128,11 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
 
     const getStatusBadge = (status: string, paidAmount: number, totalAmount: number) => {
         if (status === "paid" || paidAmount >= totalAmount) {
-            return <Badge variant="default" className="bg-green-600">已付清</Badge>;
+            return <Badge variant="default" className="bg-green-600">{t("invoicing.status.paid")}</Badge>;
         } else if (paidAmount > 0) {
-            return <Badge variant="secondary">部分付款</Badge>;
+            return <Badge variant="secondary">{t("invoicing.status.partial")}</Badge>;
         } else {
-            return <Badge variant="outline">未付款</Badge>;
+            return <Badge variant="outline">{t("invoicing.status.unpaid")}</Badge>;
         }
     };
 
@@ -167,19 +169,19 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                 <div className="flex items-center justify-between">
                     <CardTitle className="flex items-center gap-2">
                         <FileText className="w-5 h-5" />
-                        帳單列表
+                        {t("invoicing.list.cardTitle")}
                     </CardTitle>
                     <div className="flex items-center gap-2">
-                        <span className="text-sm text-muted-foreground">篩選：</span>
+                        <span className="text-sm text-muted-foreground">{t("invoicing.list.filter")}</span>
                         <Select value={monthFilter} onValueChange={setMonthFilter}>
                             <SelectTrigger className="w-[140px]">
-                                <SelectValue placeholder="選擇月份" />
+                                <SelectValue placeholder={t("invoicing.list.selectMonth")} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">全部月份</SelectItem>
+                                <SelectItem value="all">{t("invoicing.list.allMonths")}</SelectItem>
                                 {availableMonths.map((month) => (
                                     <SelectItem key={month} value={month}>
-                                        {format(new Date(month + "-01"), "yyyy 年 MM 月")}
+                                        {format(new Date(month + "-01"), t("invoicing.list.monthFormat"))}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -189,9 +191,9 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">全部類型</SelectItem>
-                                <SelectItem value="need-invoice">需開發票</SelectItem>
-                                <SelectItem value="no-invoice">不需發票</SelectItem>
+                                <SelectItem value="all">{t("invoicing.list.allTypes")}</SelectItem>
+                                <SelectItem value="need-invoice">{t("invoicing.list.needsInvoice")}</SelectItem>
+                                <SelectItem value="no-invoice">{t("invoicing.list.noInvoice")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -201,17 +203,17 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                 <Table>
                     <TableHeader>
                         <TableRow>
-                            <TableHead>帳單號碼</TableHead>
-                            <TableHead>客戶</TableHead>
-                            <TableHead>日期</TableHead>
-                            <TableHead className="text-right">金額</TableHead>
-                            <TableHead className="text-right">稅額</TableHead>
-                            <TableHead className="text-right">總計</TableHead>
-                            <TableHead className="text-right">已付</TableHead>
-                            <TableHead>發票需求</TableHead>
-                            <TableHead>提醒</TableHead>
-                            <TableHead>狀態</TableHead>
-                            <TableHead className="text-right">操作</TableHead>
+                            <TableHead>{t("invoicing.list.invoiceNumber")}</TableHead>
+                            <TableHead>{t("invoicing.list.customer")}</TableHead>
+                            <TableHead>{t("invoicing.list.date")}</TableHead>
+                            <TableHead className="text-right">{t("invoicing.list.amount")}</TableHead>
+                            <TableHead className="text-right">{t("invoicing.list.tax")}</TableHead>
+                            <TableHead className="text-right">{t("invoicing.list.total")}</TableHead>
+                            <TableHead className="text-right">{t("invoicing.list.paidAmount")}</TableHead>
+                            <TableHead>{t("invoicing.list.invoiceRequired")}</TableHead>
+                            <TableHead>{t("invoicing.list.reminders")}</TableHead>
+                            <TableHead>{t("invoicing.list.state")}</TableHead>
+                            <TableHead className="text-right">{t("invoicing.list.actions")}</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -219,7 +221,7 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                             {filteredInvoices.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={11} className="text-center text-muted-foreground">
-                                        {invoiceFilter === "all" ? "尚無帳單資料" : "無符合條件的帳單"}
+                                        {invoiceFilter === "all" ? t("invoicing.list.empty") : t("invoicing.list.noMatch")}
                                     </TableCell>
                                 </TableRow>
                             ) : (
@@ -257,11 +259,11 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                                         <TableCell>
                                             {invoice.taxAmount > 0 ? (
                                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/30 dark:text-blue-400 dark:border-blue-800">
-                                                    需開立
+                                                    {t("invoicing.list.needsInvoiceShort")}
                                                 </Badge>
                                             ) : (
                                                 <Badge variant="outline" className="text-gray-500 dark:text-gray-400">
-                                                    不需發票
+                                                    {t("invoicing.list.noInvoiceShort")}
                                                 </Badge>
                                             )}
                                         </TableCell>
@@ -281,7 +283,7 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                                                         size="sm"
                                                         variant="ghost"
                                                         onClick={() => onEdit(invoice)}
-                                                        title="編輯"
+                                                        title={t("common.edit")}
                                                     >
                                                         <Edit className="w-4 h-4" />
                                                     </Button>
@@ -296,7 +298,7 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
                                                     size="sm"
                                                     variant="ghost"
                                                     onClick={() => handleDeleteClick(invoice.id)}
-                                                    title="刪除"
+                                                    title={t("common.delete")}
                                                     className="text-destructive hover:text-destructive"
                                                 >
                                                     <Trash2 className="w-4 h-4" />
@@ -314,19 +316,19 @@ export function InvoiceList({ invoices, onEdit, onView }: InvoiceListProps) {
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                        <AlertDialogTitle>{t("invoicing.list.confirmDelete")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            確定要刪除此帳單嗎？此操作無法復原，相關的銷帳記錄和提醒也會一併刪除。
+                            {t("invoicing.list.deleteWarning")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel disabled={isDeleting}>取消</AlertDialogCancel>
+                        <AlertDialogCancel disabled={isDeleting}>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction
                             onClick={handleConfirmDelete}
                             disabled={isDeleting}
                             className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
                         >
-                            {isDeleting ? "刪除中..." : "確定刪除"}
+                            {isDeleting ? t("invoicing.list.deleting") : t("invoicing.list.deleteConfirmed")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

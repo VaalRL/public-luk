@@ -16,6 +16,7 @@ import { format, isSameDay, isBefore, startOfDay } from "date-fns";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -39,6 +40,7 @@ interface InvoiceReminderManagerProps {
 
 export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminderManagerProps) {
     const { toast } = useToast();
+    const t = useT();
     const [isOpen, setIsOpen] = useState(false);
     const [newDate, setNewDate] = useState<string>("");
     const [isAdding, setIsAdding] = useState(false);
@@ -87,8 +89,8 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
         } catch (error) {
             console.error("Failed to delete reminder", error);
             toast({
-                title: "刪除失敗",
-                description: "刪除提醒失敗",
+                title: t("invoicing.reminder.deleteFailed"),
+                description: t("invoicing.reminder.deleteFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -127,7 +129,7 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
             </DialogTrigger>
             <DialogContent className="sm:max-w-[425px]">
                 <DialogHeader>
-                    <DialogTitle>提醒日期管理</DialogTitle>
+                    <DialogTitle>{t("invoicing.reminder.manage")}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
@@ -144,8 +146,8 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
                                 >
                                     <div className="flex items-center gap-2">
                                         <span>{format(new Date(reminder.date), "yyyy/MM/dd")}</span>
-                                        {status === "expired" && <span className="text-xs font-medium text-red-600">(已過期)</span>}
-                                        {status === "today" && <span className="text-xs font-medium text-yellow-600">(今天)</span>}
+                                        {status === "expired" && <span className="text-xs font-medium text-red-600">{t("invoicing.reminder.expired")}</span>}
+                                        {status === "today" && <span className="text-xs font-medium text-yellow-600">{t("invoicing.reminder.today")}</span>}
                                     </div>
                                     <Button
                                         variant="ghost"
@@ -159,7 +161,7 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
                             );
                         })}
                         {reminders.length === 0 && (
-                            <p className="text-sm text-center text-muted-foreground py-4">尚無提醒日期</p>
+                            <p className="text-sm text-center text-muted-foreground py-4">{t("invoicing.reminder.empty")}</p>
                         )}
                     </div>
                     <div className="flex items-center gap-2 pt-4 border-t">
@@ -171,7 +173,7 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
                         />
                         <Button onClick={handleAdd} disabled={isAdding || !newDate} size="sm">
                             <Plus className="w-4 h-4 mr-2" />
-                            新增
+                            {t("invoicing.reminder.add")}
                         </Button>
                     </div>
                 </div>
@@ -180,15 +182,15 @@ export function InvoiceReminderManager({ invoiceId, reminders }: InvoiceReminder
             <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
                 <AlertDialogContent>
                     <AlertDialogHeader>
-                        <AlertDialogTitle>確認刪除</AlertDialogTitle>
+                        <AlertDialogTitle>{t("invoicing.reminder.confirmDelete")}</AlertDialogTitle>
                         <AlertDialogDescription>
-                            確定要刪除此提醒嗎？
+                            {t("invoicing.reminder.deleteConfirm")}
                         </AlertDialogDescription>
                     </AlertDialogHeader>
                     <AlertDialogFooter>
-                        <AlertDialogCancel>取消</AlertDialogCancel>
+                        <AlertDialogCancel>{t("common.cancel")}</AlertDialogCancel>
                         <AlertDialogAction onClick={confirmDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                            刪除
+                            {t("common.delete")}
                         </AlertDialogAction>
                     </AlertDialogFooter>
                 </AlertDialogContent>

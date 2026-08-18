@@ -14,6 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import type { CellValue } from "@/types/spreadsheet";
 
 type ParsedTransaction = {
@@ -33,6 +34,7 @@ type ParserTemplate = {
 
 export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: () => void }) {
     const { toast } = useToast();
+    const t = useT();
     const [isUploading, setIsUploading] = useState(false);
     const [templates, setTemplates] = useState<ParserTemplate[]>([]);
     const [selectedTemplateId, setSelectedTemplateId] = useState<string>("");
@@ -67,7 +69,7 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
                     // Get selected template config
                     const template = templates.find(t => t.id === selectedTemplateId);
                     if (!template) {
-                        throw new Error("請先選擇解析模板");
+                        throw new Error(t("reconciliation.upload.templateRequired"));
                     }
                     const config = JSON.parse(template.config) as ParserConfig;
 
@@ -136,7 +138,7 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
 
         if (!selectedTemplateId) {
             toast({
-                title: "請先選擇解析模板",
+                title: t("reconciliation.upload.templateRequired"),
                 variant: "destructive",
             });
             return;
@@ -155,7 +157,7 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
             const transactions = await parseExcelFile(file);
 
             if (transactions.length === 0) {
-                throw new Error("找不到交易資料，請檢查檔案格式或標題列");
+                throw new Error(t("reconciliation.upload.noTransactions"));
             }
 
             console.log(`解析完成，共 ${transactions.length} 筆交易`);
@@ -174,8 +176,8 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
             console.log("交易記錄創建完成");
 
             toast({
-                title: "上傳成功",
-                description: `已匯入 ${transactions.length} 筆交易`,
+                title: t("reconciliation.upload.uploadSuccess"),
+                description: t("reconciliation.upload.imported", { n: transactions.length }),
             });
 
             // Reset file input
@@ -193,19 +195,19 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
             console.error("錯誤堆疊:", error instanceof Error ? error.stack : undefined);
 
             const rawMessage = error instanceof Error ? error.message : String(error);
-            let errorMessage = rawMessage || "未知錯誤";
+            let errorMessage = rawMessage || t("reconciliation.upload.unknownError");
 
             // Provide more specific error messages
             if (rawMessage.includes("fetch")) {
-                errorMessage = "網絡請求失敗，請檢查網絡連接";
+                errorMessage = t("reconciliation.upload.networkError");
             } else if (rawMessage.includes("database")) {
-                errorMessage = "數據庫操作失敗，請重試";
+                errorMessage = t("reconciliation.upload.databaseError");
             } else if (rawMessage.includes("parse")) {
-                errorMessage = "文件解析失敗，請檢查文件格式";
+                errorMessage = t("reconciliation.upload.parseError");
             }
 
             toast({
-                title: "上傳失敗",
+                title: t("reconciliation.upload.uploadFailed"),
                 description: errorMessage,
                 variant: "destructive",
             });
@@ -219,7 +221,7 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
             <div className="w-[200px]">
                 <Select value={selectedTemplateId} onValueChange={setSelectedTemplateId}>
                     <SelectTrigger>
-                        <SelectValue placeholder="選擇解析模板" />
+                        <SelectValue placeholder={t("reconciliation.upload.selectTemplate")} />
                     </SelectTrigger>
                     <SelectContent>
                         {templates.map((t) => (
@@ -246,12 +248,12 @@ export function BankStatementUpload({ onUploadComplete }: { onUploadComplete: ()
                 {isUploading ? (
                     <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        處理中...
+                        {t("reconciliation.upload.processing")}
                     </>
                 ) : (
                     <>
                         <Upload className="mr-2 h-4 w-4" />
-                        上傳銀行明細
+                        {t("reconciliation.upload.uploadButton")}
                     </>
                 )}
             </Button>

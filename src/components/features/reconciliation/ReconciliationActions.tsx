@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 import {
     X,
     Save,
@@ -32,17 +33,18 @@ export function ReconciliationActions({
     onClear,
     onAutoMatch,
 }: ReconciliationActionsProps) {
+    const t = useT();
     return (
         <div className="flex gap-2">
             {isEditing ? (
                 <>
                     <Button variant="outline" onClick={onEditToggle}>
                         <X className="w-4 h-4 mr-2" />
-                        取消
+                        {t("common.cancel")}
                     </Button>
                     <Button onClick={onSave}>
                         <Save className="w-4 h-4 mr-2" />
-                        儲存變更
+                        {t("reconciliation.ui.saveChanges")}
                     </Button>
                 </>
             ) : (
@@ -51,7 +53,7 @@ export function ReconciliationActions({
                         <>
                             <Button variant="outline" onClick={onOpenSnapshotDialog}>
                                 <Archive className="w-4 h-4 mr-2" />
-                                儲存對帳記錄
+                                {t("reconciliation.ui.saveSnapshot")}
                             </Button>
                             <Button
                                 variant="destructive"
@@ -59,11 +61,11 @@ export function ReconciliationActions({
                                 onClick={onClear}
                             >
                                 <Trash2 className="w-4 h-4 mr-2" />
-                                移除檔案
+                                {t("reconciliation.ui.removeFile")}
                             </Button>
                             <Button variant="outline" onClick={onEditToggle}>
                                 <Pencil className="w-4 h-4 mr-2" />
-                                編輯
+                                {t("common.edit")}
                             </Button>
                         </>
                     )}
@@ -72,7 +74,7 @@ export function ReconciliationActions({
                         disabled={isMatching || !hasTransactions}
                     >
                         <Zap className="w-4 h-4 mr-2" />
-                        {isMatching ? "銷帳中..." : "執行自動銷帳"}
+                        {isMatching ? t("reconciliation.ui.autoMatching") : t("reconciliation.ui.autoMatch")}
                     </Button>
                 </>
             )}

@@ -7,6 +7,7 @@ import { InvoiceList } from "@/components/invoice-list";
 import { InvoiceDetailView } from "@/components/invoice-detail-view";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
+import { useT } from "@/lib/i18n/context";
 
 type Company = {
     id: string;
@@ -55,6 +56,7 @@ interface InvoicingPageClientProps {
 }
 
 export function InvoicingPageClient({ companies, invoices, itemTemplates, defaultTitle }: InvoicingPageClientProps) {
+    const t = useT();
     const router = useRouter();
     const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<'list' | 'view' | 'edit'>('list');
@@ -155,7 +157,7 @@ export function InvoicingPageClient({ companies, invoices, itemTemplates, defaul
             <div className="flex justify-end">
                 <Button onClick={handleCreateNew}>
                     <Plus className="w-4 h-4 mr-2" />
-                    建立新帳單
+                    {t("invoicing.createNew")}
                 </Button>
             </div>
 

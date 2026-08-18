@@ -10,6 +10,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 
@@ -28,19 +29,20 @@ export function SnapshotDialog({
     onSnapshotMonthChange,
     onConfirm,
 }: SnapshotDialogProps) {
+    const t = useT();
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent aria-describedby="snapshot-dialog-description">
                 <DialogHeader>
-                    <DialogTitle>儲存對帳記錄</DialogTitle>
+                    <DialogTitle>{t("reconciliation.ui.saveSnapshot")}</DialogTitle>
                     <DialogDescription id="snapshot-dialog-description">
-                        請確認要儲存的月份。這將會覆蓋該月份已存在的對帳記錄。
+                        {t("reconciliation.ui.snapshotWarning")}
                     </DialogDescription>
                 </DialogHeader>
                 <div className="grid gap-4 py-4">
                     <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="month" className="text-right">
-                            月份
+                            {t("reconciliation.ui.month")}
                         </Label>
                         <Input
                             id="month"
@@ -53,9 +55,9 @@ export function SnapshotDialog({
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
-                        取消
+                        {t("common.cancel")}
                     </Button>
-                    <Button onClick={onConfirm}>確認儲存</Button>
+                    <Button onClick={onConfirm}>{t("reconciliation.ui.confirmSave")}</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

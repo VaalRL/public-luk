@@ -10,6 +10,7 @@ import {
     TableRow,
 } from "@/components/ui/table";
 import { TransactionRow } from "./TransactionRow";
+import { useT } from "@/lib/i18n/context";
 import { Transaction } from "./types";
 
 interface TransactionListProps {
@@ -33,15 +34,16 @@ export const TransactionList = React.memo(function TransactionList({
     getStatus,
     getMatchedInvoices,
 }: TransactionListProps) {
+    const t = useT();
     return (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>日期</TableHead>
-                    <TableHead>摘要/後五碼</TableHead>
-                    <TableHead className="text-right">金額</TableHead>
-                    <TableHead>狀態</TableHead>
-                    <TableHead>銷帳結果</TableHead>
+                    <TableHead>{t("reconciliation.ui.date")}</TableHead>
+                    <TableHead>{t("reconciliation.ui.summary")}</TableHead>
+                    <TableHead className="text-right">{t("reconciliation.ui.amount")}</TableHead>
+                    <TableHead>{t("reconciliation.ui.state")}</TableHead>
+                    <TableHead>{t("reconciliation.ui.result")}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -51,7 +53,7 @@ export const TransactionList = React.memo(function TransactionList({
                             colSpan={5}
                             className="text-center text-muted-foreground"
                         >
-                            尚無交易資料，請先上傳銀行明細
+                            {t("reconciliation.ui.noTransactions")}
                         </TableCell>
                     </TableRow>
                 ) : (

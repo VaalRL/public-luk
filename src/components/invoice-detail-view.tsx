@@ -13,6 +13,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { recordManualPayment } from "@/app/actions/invoice";
 import { useToast } from "@/hooks/use-toast";
+import { derivedTaxRate } from "@/lib/invoice-total";
+import { useT } from "@/lib/i18n/context";
 import type { InvoiceItem } from "@/lib/validations/invoice";
 
 type Company = {
@@ -61,15 +63,16 @@ interface InvoiceDetailViewProps {
 
 export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailViewProps) {
     const { toast } = useToast();
+    const t = useT();
     const items = typeof invoice.items === 'string' ? JSON.parse(invoice.items) : invoice.items;
 
     const getStatusBadge = (status: string, paidAmount: number, totalAmount: number) => {
         if (status === "paid" || paidAmount >= totalAmount) {
-            return <Badge className="bg-green-600">已付清</Badge>;
+            return <Badge className="bg-green-600">{t("invoicing.status.paid")}</Badge>;
         } else if (paidAmount > 0) {
-            return <Badge variant="secondary">部分付款</Badge>;
+            return <Badge variant="secondary">{t("invoicing.status.partial")}</Badge>;
         } else {
-            return <Badge variant="outline">未付款</Badge>;
+            return <Badge variant="outline">{t("invoicing.status.unpaid")}</Badge>;
         }
     };
 
@@ -86,19 +89,19 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                 invoiceId: invoice.id,
                 amount: paymentAmount,
                 date: new Date(paymentDate),
-                note: paymentNote || "手動記錄付款"
+                note: paymentNote || t("invoicing.detail.manualPayment")
             });
 
             if (result.success) {
                 setIsPaymentDialogOpen(false);
                 toast({
-                    title: "成功",
-                    description: "已成功記錄付款",
+                    title: t("common.saveSuccess"),
+                    description: t("invoicing.detail.paymentRecorded"),
                 });
                 // Refresh logic would go here
             } else {
                 toast({
-                    title: "錯誤",
+                    title: t("common.saveFailed"),
                     description: result.error,
                     variant: "destructive",
                 });
@@ -106,8 +109,8 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
         } catch (error) {
             console.error(error);
             toast({
-                title: "錯誤",
-                description: "記錄付款失敗",
+                title: t("common.saveFailed"),
+                description: t("invoicing.detail.paymentFailed"),
                 variant: "destructive",
             });
         } finally {
@@ -126,10 +129,10 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                         <div>
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="w-5 h-5" />
-                                帳單詳情
+                                {t("invoicing.detail.cardTitle")}
                             </CardTitle>
                             <p className="text-sm text-muted-foreground mt-1">
-                                {invoice.invoiceNumber || "無帳單號碼"}
+                                {invoice.invoiceNumber || t("invoicing.detail.noInvoiceNumber")}
                             </p>
                         </div>
                     </div>
@@ -138,21 +141,21 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                             <DialogTrigger asChild>
                                 <Button variant="outline" className="text-green-600 border-green-200 hover:bg-green-50">
                                     <DollarSign className="w-4 h-4 mr-2" />
-                                    記錄付款
+                                    {t("invoicing.detail.recordPayment")}
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
                                 <DialogHeader>
-                                    <DialogTitle>手動記錄付款</DialogTitle>
+                                    <DialogTitle>{t("invoicing.detail.manualPayment")}</DialogTitle>
                                     <DialogDescription>
-                                        此功能用於記錄非銀行轉帳的付款（如現金、支票）。
-                                        這將會建立一筆銷帳記錄。
+                                        {t("invoicing.detail.recordPaymentHint1")}
+                                        {t("invoicing.detail.recordPaymentHint2")}
                                     </DialogDescription>
                                 </DialogHeader>
                                 <div className="grid gap-4 py-4">
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="amount" className="text-right">
-                                            金額
+                                            {t("invoicing.detail.amount")}
                                         </Label>
                                         <Input
                                             id="amount"
@@ -164,7 +167,7 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="date" className="text-right">
-                                            日期
+                                            {t("invoicing.detail.date")}
                                         </Label>
                                         <Input
                                             id="date"
@@ -176,20 +179,20 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                                     </div>
                                     <div className="grid grid-cols-4 items-center gap-4">
                                         <Label htmlFor="note" className="text-right">
-                                            備註
+                                            {t("invoicing.detail.note")}
                                         </Label>
                                         <Input
                                             id="note"
                                             value={paymentNote}
                                             onChange={(e) => setPaymentNote(e.target.value)}
-                                            placeholder="例如: 現金付款"
+                                            placeholder={t("invoicing.detail.notePlaceholder")}
                                             className="col-span-3"
                                         />
                                     </div>
                                 </div>
                                 <DialogFooter>
                                     <Button onClick={handleRecordPayment} disabled={isSubmittingPayment}>
-                                        {isSubmittingPayment ? "記錄中..." : "確認記錄"}
+                                        {isSubmittingPayment ? t("invoicing.detail.recording") : t("invoicing.detail.confirmRecord")}
                                     </Button>
                                 </DialogFooter>
                             </DialogContent>
@@ -198,7 +201,7 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                         <InvoiceDownloadButton invoice={invoice} />
                         <Button onClick={onEdit}>
                             <Edit className="w-4 h-4 mr-2" />
-                            編輯
+                            {t("common.edit")}
                         </Button>
                     </div>
                 </div>
@@ -207,26 +210,26 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                 {/* Status and Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">狀態</p>
+                        <p className="text-sm text-muted-foreground">{t("invoicing.detail.state")}</p>
                         <div>{getStatusBadge(invoice.status, invoice.paidAmount, invoice.totalAmount)}</div>
                     </div>
                     <div className="space-y-1">
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
                             <Calendar className="w-4 h-4" />
-                            日期
+                            {t("invoicing.detail.date")}
                         </p>
                         <p className="font-medium">{format(new Date(invoice.date), "yyyy/MM/dd")}</p>
                     </div>
                     <div className="space-y-1">
-                        <p className="text-sm text-muted-foreground">發票</p>
+                        <p className="text-sm text-muted-foreground">{t("invoicing.detail.invoice")}</p>
                         <div>
                             {invoice.issueInvoice !== false ? (
                                 <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                                    已開立
+                                    {t("invoicing.detail.invoiceIssued")}
                                 </Badge>
                             ) : (
                                 <Badge variant="outline" className="text-gray-500">
-                                    未開立
+                                    {t("invoicing.detail.invoiceNotIssued")}
                                 </Badge>
                             )}
                         </div>
@@ -240,20 +243,20 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                     <div className="space-y-2">
                         <h3 className="font-semibold flex items-center gap-2">
                             <Building2 className="w-4 h-4" />
-                            客戶 (甲方)
+                            {t("invoicing.detail.client")}
                         </h3>
                         <div className="text-sm space-y-1 pl-6">
                             <p className="font-medium">{invoice.company.name}</p>
-                            {invoice.company.taxId && <p className="text-muted-foreground">統編: {invoice.company.taxId}</p>}
+                            {invoice.company.taxId && <p className="text-muted-foreground">{t("invoicing.detail.taxIdInline")}: {invoice.company.taxId}</p>}
                             {invoice.company.contactName && (
                                 <p className="text-muted-foreground flex items-center gap-1">
                                     <User className="w-3 h-3" />
                                     {invoice.company.contactName}
                                 </p>
                             )}
-                            {invoice.company.phone && <p className="text-muted-foreground">電話: {invoice.company.phone}</p>}
+                            {invoice.company.phone && <p className="text-muted-foreground">{t("invoicing.detail.phoneInline")}: {invoice.company.phone}</p>}
                             {invoice.company.email && <p className="text-muted-foreground">Email: {invoice.company.email}</p>}
-                            {invoice.company.address && <p className="text-muted-foreground">地址: {invoice.company.address}</p>}
+                            {invoice.company.address && <p className="text-muted-foreground">{t("invoicing.detail.addressInline")}: {invoice.company.address}</p>}
                         </div>
                     </div>
 
@@ -261,20 +264,20 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                         <div className="space-y-2">
                             <h3 className="font-semibold flex items-center gap-2">
                                 <Building2 className="w-4 h-4" />
-                                廠商 (乙方)
+                                {t("invoicing.detail.providerParty")}
                             </h3>
                             <div className="text-sm space-y-1 pl-6">
                                 <p className="font-medium">{invoice.provider.name}</p>
-                                {invoice.provider.taxId && <p className="text-muted-foreground">統編: {invoice.provider.taxId}</p>}
+                                {invoice.provider.taxId && <p className="text-muted-foreground">{t("invoicing.detail.taxIdInline")}: {invoice.provider.taxId}</p>}
                                 {invoice.provider.contactName && (
                                     <p className="text-muted-foreground flex items-center gap-1">
                                         <User className="w-3 h-3" />
                                         {invoice.provider.contactName}
                                     </p>
                                 )}
-                                {invoice.provider.phone && <p className="text-muted-foreground">電話: {invoice.provider.phone}</p>}
+                                {invoice.provider.phone && <p className="text-muted-foreground">{t("invoicing.detail.phoneInline")}: {invoice.provider.phone}</p>}
                                 {invoice.provider.email && <p className="text-muted-foreground">Email: {invoice.provider.email}</p>}
-                                {invoice.provider.address && <p className="text-muted-foreground">地址: {invoice.provider.address}</p>}
+                                {invoice.provider.address && <p className="text-muted-foreground">{t("invoicing.detail.addressInline")}: {invoice.provider.address}</p>}
                             </div>
                         </div>
                     )}
@@ -286,23 +289,23 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                 <div className="space-y-6">
                     {/* Service Items */}
                     <div className="space-y-4">
-                        <h3 className="font-semibold">服務項目</h3>
+                        <h3 className="font-semibold">{t("invoicing.detail.serviceItems")}</h3>
                         <div className="border rounded-lg overflow-hidden">
                             <table className="w-full">
                                 <thead className="bg-muted/50">
                                     <tr>
-                                        <th className="text-left p-3 text-sm font-medium">項目名稱</th>
-                                        <th className="text-left p-3 text-sm font-medium">說明</th>
-                                        <th className="text-right p-3 text-sm font-medium">數量</th>
-                                        <th className="text-right p-3 text-sm font-medium">單價</th>
-                                        <th className="text-right p-3 text-sm font-medium">金額</th>
-                                        <th className="text-left p-3 text-sm font-medium">備註</th>
+                                        <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.name")}</th>
+                                        <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.description")}</th>
+                                        <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.quantity")}</th>
+                                        <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.price")}</th>
+                                        <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.amount")}</th>
+                                        <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.note")}</th>
                                     </tr>
                                 </thead>
                                 <tbody>
                                     {items.filter((item: InvoiceItem) => !item.type || item.type === 'service').length === 0 ? (
                                         <tr>
-                                            <td colSpan={6} className="p-3 text-center text-muted-foreground text-sm">無服務項目</td>
+                                            <td colSpan={6} className="p-3 text-center text-muted-foreground text-sm">{t("invoicing.items.noServiceItems")}</td>
                                         </tr>
                                     ) : (
                                         items.filter((item: InvoiceItem) => !item.type || item.type === 'service').map((item: InvoiceItem, index: number) => (
@@ -324,17 +327,17 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                     {/* Reimbursement Items */}
                     {items.some((item: InvoiceItem) => item.type === 'reimbursement') && (
                         <div className="space-y-4">
-                            <h3 className="font-semibold">代墊費用</h3>
+                            <h3 className="font-semibold">{t("invoicing.detail.reimbursementItems")}</h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full">
                                     <thead className="bg-muted/50">
                                         <tr>
-                                            <th className="text-left p-3 text-sm font-medium">項目名稱</th>
-                                            <th className="text-left p-3 text-sm font-medium">說明</th>
-                                            <th className="text-right p-3 text-sm font-medium">數量</th>
-                                            <th className="text-right p-3 text-sm font-medium">單價</th>
-                                            <th className="text-right p-3 text-sm font-medium">金額</th>
-                                            <th className="text-left p-3 text-sm font-medium">備註</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.name")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.description")}</th>
+                                            <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.quantity")}</th>
+                                            <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.price")}</th>
+                                            <th className="text-right p-3 text-sm font-medium">{t("invoicing.items.amount")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.items.note")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -368,21 +371,25 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                             return (
                                 <>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">服務項目小計 (未稅)</span>
+                                        <span className="text-muted-foreground">{t("invoicing.detail.serviceSubtotalUntaxed")}</span>
                                         <span className="font-mono">${serviceSubtotal.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">稅額 ({invoice.taxAmount > 0 ? "5%" : "0%"})</span>
+                                        <span className="text-muted-foreground">
+                                            {t("invoicing.form.taxWithRate", {
+                                                rate: derivedTaxRate(invoice.amount, invoice.taxAmount),
+                                            })}
+                                        </span>
                                         <span className="font-mono">${invoice.taxAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm font-medium border-t pt-2 mt-2">
-                                        <span>服務項目總計 (含稅)</span>
+                                        <span>{t("invoicing.detail.serviceTotalTaxed")}</span>
                                         <span className="font-mono">${Math.round(serviceSubtotal + invoice.taxAmount).toLocaleString()}</span>
                                     </div>
 
                                     {reimbursementSubtotal > 0 && (
                                         <div className="flex justify-between text-sm mt-2">
-                                            <span className="text-muted-foreground">代墊費用小計</span>
+                                            <span className="text-muted-foreground">{t("invoicing.detail.reimbursementSubtotal")}</span>
                                             <span className="font-mono">${reimbursementSubtotal.toLocaleString()}</span>
                                         </div>
                                     )}
@@ -390,15 +397,15 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                                     <Separator className="my-2" />
 
                                     <div className="flex justify-between font-bold text-lg">
-                                        <span>總計金額</span>
+                                        <span>{t("invoicing.detail.grandTotal")}</span>
                                         <span className="font-mono">${invoice.totalAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-muted-foreground">已付款</span>
+                                        <span className="text-muted-foreground">{t("invoicing.detail.paid")}</span>
                                         <span className="font-mono text-green-600">${invoice.paidAmount.toLocaleString()}</span>
                                     </div>
                                     <div className="flex justify-between font-semibold">
-                                        <span className="text-muted-foreground">未付款</span>
+                                        <span className="text-muted-foreground">{t("invoicing.status.unpaid")}</span>
                                         <span className="font-mono text-red-600">${Math.round(invoice.totalAmount - invoice.paidAmount).toLocaleString()}</span>
                                     </div>
                                 </>
@@ -412,16 +419,16 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                     <>
                         <Separator />
                         <div className="space-y-4">
-                            <h3 className="font-semibold">收款資訊</h3>
+                            <h3 className="font-semibold">{t("invoicing.detail.bankSection")}</h3>
                             <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full">
                                     <thead className="bg-muted/50">
                                         <tr>
-                                            <th className="text-left p-3 text-sm font-medium">幣別</th>
-                                            <th className="text-left p-3 text-sm font-medium">銀行</th>
-                                            <th className="text-left p-3 text-sm font-medium">分行</th>
-                                            <th className="text-left p-3 text-sm font-medium">帳號</th>
-                                            <th className="text-left p-3 text-sm font-medium">戶名</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.detail.bankCurrency")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.detail.bankName")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.detail.bankBranch")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.detail.bankAccountNumber")}</th>
+                                            <th className="text-left p-3 text-sm font-medium">{t("invoicing.detail.bankAccountHolder")}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -446,7 +453,7 @@ export function InvoiceDetailView({ invoice, onEdit, onBack }: InvoiceDetailView
                     <>
                         <Separator />
                         <div className="space-y-2">
-                            <h3 className="font-semibold">提醒事項</h3>
+                            <h3 className="font-semibold">{t("invoicing.detail.reminders")}</h3>
                             <div className="space-y-2">
                                 {invoice.reminders.map((reminder) => (
                                     <div key={reminder.id} className="flex items-start gap-3 p-3 border rounded-lg bg-muted/30">
