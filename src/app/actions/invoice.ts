@@ -5,6 +5,8 @@ import { revalidatePath } from "next/cache";
 import { format } from "date-fns";
 import { withErrorHandling, type ActionResult } from "@/lib/action-wrapper";
 import { syncInvoiceBalance } from "@/lib/invoice-balance";
+import { invoiceTotal } from "@/lib/invoice-total";
+import type { InvoiceItem } from "@/lib/validations/invoice";
 
 export async function getInvoices() {
     return await prisma.invoice.findMany({
@@ -53,7 +55,8 @@ import { Prisma, Invoice } from "@prisma/client";
 export async function createInvoice(rawData: unknown): Promise<ActionResult<Invoice>> {
     return withValidation(
         async (data) => {
-            const totalAmount = Math.round(data.amount + data.taxAmount);
+            // 總額必須含代墊費用，否則對帳會把只付了服務款的帳單當成已結清
+            const totalAmount = invoiceTotal(data.amount, data.taxAmount, data.items);
 
             let invoiceNumber = data.invoiceNumber;
 
@@ -147,6 +150,18 @@ export async function createInvoice(rawData: unknown): Promise<ActionResult<Invo
 
 import { updateInvoiceSchema } from "@/lib/validations/invoice";
 
+/** 讀取帳單目前儲存的品項；解析失敗時回傳空陣列 */
+async function loadInvoiceItems(id: string): Promise<InvoiceItem[]> {
+    const existing = await prisma.invoice.findUnique({ where: { id }, select: { items: true } });
+    if (!existing) return [];
+    try {
+        const parsed = JSON.parse(existing.items);
+        return Array.isArray(parsed) ? (parsed as InvoiceItem[]) : [];
+    } catch {
+        return [];
+    }
+}
+
 export async function updateInvoice(
     id: string,
     rawData: unknown
@@ -161,7 +176,10 @@ export async function updateInvoice(
             const updateData: Prisma.InvoiceUncheckedUpdateInput = { ...rest };
 
             if (data.amount !== undefined && data.taxAmount !== undefined) {
-                updateData.totalAmount = Math.round(data.amount + data.taxAmount);
+                // 總額必須含代墊費用。這是部分更新，呼叫端可能只送了金額而沒送品項，
+                // 這時要沿用帳單上既有的品項來取代墊金額 —— 用空陣列會把代墊款算成 0。
+                const effectiveItems = items ?? await loadInvoiceItems(id);
+                updateData.totalAmount = invoiceTotal(data.amount, data.taxAmount, effectiveItems);
             }
 
             if (items) {
