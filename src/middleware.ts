@@ -94,14 +94,18 @@ export async function middleware(request: NextRequest) {
     const headers = response.headers;
 
     // frame-src 需要 blob:：設定頁的版型預覽把當場產生的 PDF 直接嵌在頁面上。
-    // default-src 沒有涵蓋這個情境（會退回 'self'，blob: 一律被擋），
-    // 而這裡放行的只有頁面自己產生的資料，不會多開任何外部連線。
+    // connect-src 需要 data:：@react-pdf/renderer 每次產生 PDF 都會去抓一個
+    // data: URI 的 WebAssembly 模組（woff2 用的 brotli 解壓）。本專案的字型是
+    // woff，抓不到也不影響功能，但擋下來會在 console 留一則 CSP 錯誤，
+    // 之後有人來查別的問題時會被它誤導。
+    // 兩者放行的都只有頁面自己產生的資料，不會多開任何外部連線。
     const csp = `
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
         font-src 'self';
+        connect-src 'self' data:;
         frame-src 'self' blob:;
         object-src 'none';
         base-uri 'self';

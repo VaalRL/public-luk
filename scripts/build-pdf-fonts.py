@@ -37,6 +37,7 @@ from pathlib import Path
 try:
     from fontTools.ttLib import TTFont
     from fontTools.merge import Merger
+    from fontTools.subset import Options, Subsetter
 except ImportError:
     sys.exit("需要 fonttools：pip install fonttools")
 
@@ -44,7 +45,7 @@ ROOT = Path(__file__).resolve().parent.parent
 SRC = ROOT / "node_modules" / "@fontsource" / "noto-sans-tc" / "files"
 FONTS = ROOT / "public" / "fonts"
 
-# 基底：涵蓋常用漢字的子集
+# 基底：涵蓋常用漢字的子集（同樣取自 node_modules，不必在 repo 裡放一份）
 BASE = "noto-sans-tc-chinese-traditional-{weight}-normal.woff"
 
 # 一定要有的字元範圍：全形標點、CJK 標點、一般標點、基本拉丁
@@ -59,11 +60,11 @@ WEIGHTS = ("400", "700")
 
 
 def build(weight: str) -> None:
-    base_path = FONTS / BASE.format(weight=weight)
-    if not base_path.exists():
-        sys.exit(f"找不到基底字型：{base_path}")
     if not SRC.exists():
         sys.exit(f"找不到 @fontsource 字型來源：{SRC}（請先執行 npm install）")
+    base_path = SRC / BASE.format(weight=weight)
+    if not base_path.exists():
+        sys.exit(f"找不到基底字型：{base_path}")
 
     base = TTFont(base_path)
     missing = REQUIRED - set(base.getBestCmap().keys())
@@ -98,6 +99,22 @@ def build(weight: str) -> None:
             parts.append(out)
 
         merged = Merger().merge(parts)
+
+        # 合併是整包子集併進來的，會夾帶一堆用不到的漢字。
+        # 字型愈大，瀏覽器產生 PDF 就愈慢（實測 2.0MB 版本比 1.3MB 版本
+        # 每張單多花約 14 秒），所以這裡再切一次：只留基底本來就有的字，
+        # 加上這次要補的標點。
+        #
+        # layout_closure 關掉的原因：開著的話，凡是能經由 GSUB 替換到的字
+        # 都會被保留（直排替代字之類），字數會從 6.7k 膨脹到 9.8k、
+        # 檔案回到 2MB。單據是橫排的，用不到那些替代字形。
+        keep = set(base.getBestCmap().keys()) | target
+        options = Options()
+        options.layout_closure = False
+        subsetter = Subsetter(options=options)
+        subsetter.populate(unicodes=keep)
+        subsetter.subset(merged)
+
         merged.flavor = "woff"
         dest = FONTS / f"noto-sans-tc-pdf-{weight}.woff"
         merged.save(dest)
