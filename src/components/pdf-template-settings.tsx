@@ -21,79 +21,81 @@ import {
     type PdfColumnWidths,
 } from "@/lib/pdf-template";
 import { sampleInvoiceForPreview } from "@/lib/pdf-template-sample";
+import { useT } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-/** 標籤欄位在畫面上的顯示名稱 */
-const labelNames: Record<PdfLabelKey, string> = {
-    documentTitle: "預設標題（開新帳單時帶入）",
-    date: "日期",
-    invoiceNumber: "單號",
-    clientBlock: "買方區塊標題",
-    providerBlock: "賣方區塊標題",
-    companyName: "公司名稱",
-    taxId: "統一編號",
-    contactName: "聯絡人",
-    phone: "電話",
-    email: "Email",
-    address: "地址",
-    serviceSection: "服務項目表頭",
-    reimbursementSection: "代墊費用表頭",
-    itemName: "項目名稱",
-    itemContent: "內容",
-    quantity: "數量",
-    unitPrice: "單價",
-    lineTotal: "總價",
-    itemNote: "備註",
-    subtotal: "未稅小計",
-    tax: "稅額（可用 {rate} 代入稅率）",
-    serviceTotal: "服務總計",
-    reimbursementTotal: "代墊小計",
-    grandTotal: "總計金額",
-    bankSection: "收款資訊標題",
-    bankCurrency: "幣別",
-    bankName: "銀行",
-    bankBranch: "分行",
-    bankAccountNumber: "帳號",
-    bankAccountHolder: "戶名",
-    signatureClient: "買方簽章欄",
-    signatureProvider: "賣方簽章欄",
-    emptyValue: "空值顯示字元",
-};
-
-const layoutNumberFields = [
-    { key: "pagePadding", name: "頁面留白 (pt)" },
-    { key: "baseFontSize", name: "內文字級 (pt)" },
-    { key: "titleFontSize", name: "標題字級 (pt)" },
-    { key: "logoWidth", name: "Logo 寬 (pt)" },
-    { key: "logoHeight", name: "Logo 高 (pt)" },
-    { key: "stampWidth", name: "印章寬 (pt)" },
-    { key: "stampHeight", name: "印章高 (pt)" },
-    { key: "stampRight", name: "印章距右 (pt)" },
-    { key: "stampBottom", name: "印章距下 (pt)" },
-] as const;
-
-type LayoutNumberKey = (typeof layoutNumberFields)[number]["key"];
-
-const columnFields = [
-    { key: "category", name: "類別" },
-    { key: "name", name: "項目名稱" },
-    { key: "content", name: "內容" },
-    { key: "quantity", name: "數量" },
-    { key: "price", name: "單價" },
-    { key: "total", name: "總價" },
-    { key: "note", name: "備註" },
-] as const;
-
+/** 版面設定裡可以直接填數字的欄位（排除紙張大小與欄寬） */
+type LayoutNumberKey = Exclude<keyof PdfTemplate["layout"], "pageSize" | "columnWidths">;
 type ColumnKey = keyof PdfColumnWidths;
 
-const toggles = [
-    { key: "showLogo", name: "顯示 Logo" },
-    { key: "showStamp", name: "顯示用印" },
-    { key: "showTaxRow", name: "顯示稅額列（關閉後服務總計仍含稅）" },
-    { key: "showBankAccounts", name: "顯示收款資訊" },
-    { key: "showSignatures", name: "顯示簽章欄" },
-] as const;
+/** 標籤欄位在設定畫面上的顯示名稱（對應文案鍵） */
+const labelNameKeys: Record<PdfLabelKey, MessageKey> = {
+    documentTitle: "pdfTemplate.labels.documentTitle",
+    date: "pdfTemplate.labels.date",
+    invoiceNumber: "pdfTemplate.labels.invoiceNumber",
+    clientBlock: "pdfTemplate.labels.clientBlock",
+    providerBlock: "pdfTemplate.labels.providerBlock",
+    companyName: "pdfTemplate.labels.companyName",
+    taxId: "pdfTemplate.labels.taxId",
+    contactName: "pdfTemplate.labels.contactName",
+    phone: "pdfTemplate.labels.phone",
+    email: "pdfTemplate.labels.email",
+    address: "pdfTemplate.labels.address",
+    serviceSection: "pdfTemplate.labels.serviceSection",
+    reimbursementSection: "pdfTemplate.labels.reimbursementSection",
+    itemName: "pdfTemplate.labels.itemName",
+    itemContent: "pdfTemplate.labels.itemContent",
+    quantity: "pdfTemplate.labels.quantity",
+    unitPrice: "pdfTemplate.labels.unitPrice",
+    lineTotal: "pdfTemplate.labels.lineTotal",
+    itemNote: "pdfTemplate.labels.itemNote",
+    subtotal: "pdfTemplate.labels.subtotal",
+    tax: "pdfTemplate.labels.tax",
+    serviceTotal: "pdfTemplate.labels.serviceTotal",
+    reimbursementTotal: "pdfTemplate.labels.reimbursementTotal",
+    grandTotal: "pdfTemplate.labels.grandTotal",
+    bankSection: "pdfTemplate.labels.bankSection",
+    bankCurrency: "pdfTemplate.labels.bankCurrency",
+    bankName: "pdfTemplate.labels.bankName",
+    bankBranch: "pdfTemplate.labels.bankBranch",
+    bankAccountNumber: "pdfTemplate.labels.bankAccountNumber",
+    bankAccountHolder: "pdfTemplate.labels.bankAccountHolder",
+    signatureClient: "pdfTemplate.labels.signatureClient",
+    signatureProvider: "pdfTemplate.labels.signatureProvider",
+    emptyValue: "pdfTemplate.labels.emptyValue",
+};
 
-type ToggleKey = (typeof toggles)[number]["key"];
+const layoutNumberFields: { key: LayoutNumberKey; nameKey: MessageKey }[] = [
+    { key: "pagePadding", nameKey: "pdfTemplate.layout.pagePadding" },
+    { key: "baseFontSize", nameKey: "pdfTemplate.layout.baseFontSize" },
+    { key: "titleFontSize", nameKey: "pdfTemplate.layout.titleFontSize" },
+    { key: "logoWidth", nameKey: "pdfTemplate.layout.logoWidth" },
+    { key: "logoHeight", nameKey: "pdfTemplate.layout.logoHeight" },
+    { key: "stampWidth", nameKey: "pdfTemplate.layout.stampWidth" },
+    { key: "stampHeight", nameKey: "pdfTemplate.layout.stampHeight" },
+    { key: "stampRight", nameKey: "pdfTemplate.layout.stampRight" },
+    { key: "stampBottom", nameKey: "pdfTemplate.layout.stampBottom" },
+];
+
+const columnFields: { key: ColumnKey; nameKey: MessageKey }[] = [
+    { key: "category", nameKey: "pdfTemplate.columns.category" },
+    { key: "name", nameKey: "pdfTemplate.columns.name" },
+    { key: "content", nameKey: "pdfTemplate.columns.content" },
+    { key: "quantity", nameKey: "pdfTemplate.columns.quantity" },
+    { key: "price", nameKey: "pdfTemplate.columns.price" },
+    { key: "total", nameKey: "pdfTemplate.columns.total" },
+    { key: "note", nameKey: "pdfTemplate.columns.note" },
+];
+
+type ToggleKey = "showLogo" | "showStamp" | "showTaxRow" | "showBankAccounts" | "showSignatures";
+
+const toggles: { key: ToggleKey; nameKey: MessageKey }[] = [
+    { key: "showLogo", nameKey: "pdfTemplate.options.showLogo" },
+    { key: "showStamp", nameKey: "pdfTemplate.options.showStamp" },
+    { key: "showTaxRow", nameKey: "pdfTemplate.options.showTaxRow" },
+    { key: "showBankAccounts", nameKey: "pdfTemplate.options.showBankAccounts" },
+    { key: "showSignatures", nameKey: "pdfTemplate.options.showSignatures" },
+];
 
 /** 數字欄位以字串保存，讓使用者可以清空後重打，而不是一清空就被塞回 0 */
 type NumberDraft = Record<LayoutNumberKey, string> & { columns: Record<ColumnKey, string> };
@@ -112,6 +114,7 @@ interface PdfTemplateSettingsProps {
 
 export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProps) {
     const { toast } = useToast();
+    const t = useT();
     const [template, setTemplate] = useState<PdfTemplate>(initialTemplate);
     const [numbers, setNumbers] = useState<NumberDraft>(() => toDraft(initialTemplate));
     const [isSaving, setIsSaving] = useState(false);
@@ -163,7 +166,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
     const handleSave = async () => {
         const payload = buildTemplate();
         if (!payload) {
-            toast({ title: "儲存失敗", description: "版面欄位不可留空，且必須是數字", variant: "destructive" });
+            toast({ title: t("common.saveFailed"), description: t("pdfTemplate.numbersRequired"), variant: "destructive" });
             return;
         }
 
@@ -175,9 +178,9 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                 setNumbers(toDraft(result.data));
                 // 舊的預覽已經不代表現在的設定了，清掉以免誤導
                 setPreviewUrl(null);
-                toast({ title: "儲存成功", description: "報價單版型已更新" });
+                toast({ title: t("common.saveSuccess"), description: t("pdfTemplate.saved") });
             } else {
-                toast({ title: "儲存失敗", description: result.error, variant: "destructive" });
+                toast({ title: t("common.saveFailed"), description: result.error, variant: "destructive" });
             }
         } finally {
             setIsSaving(false);
@@ -192,9 +195,9 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                 setTemplate(result.data);
                 setNumbers(toDraft(result.data));
                 setPreviewUrl(null);
-                toast({ title: "已還原", description: "版型已回到預設值" });
+                toast({ title: t("pdfTemplate.resetDone"), description: t("pdfTemplate.resetDoneDescription") });
             } else {
-                toast({ title: "還原失敗", description: result.error, variant: "destructive" });
+                toast({ title: t("pdfTemplate.resetFailed"), description: result.error, variant: "destructive" });
             }
         } finally {
             setIsSaving(false);
@@ -211,7 +214,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
     const handlePreview = async () => {
         const payload = buildTemplate();
         if (!payload) {
-            toast({ title: "無法預覽", description: "版面欄位不可留空，且必須是數字", variant: "destructive" });
+            toast({ title: t("pdfTemplate.previewInvalid"), description: t("pdfTemplate.numbersRequired"), variant: "destructive" });
             return;
         }
 
@@ -230,7 +233,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             setPreviewUrl(URL.createObjectURL(blob));
         } catch (error) {
             console.error("預覽 PDF 失敗:", error);
-            toast({ title: "預覽失敗", description: "請檢查版面設定", variant: "destructive" });
+            toast({ title: t("pdfTemplate.previewFailed"), description: t("pdfTemplate.checkLayout"), variant: "destructive" });
         } finally {
             setIsPreviewing(false);
         }
@@ -242,24 +245,24 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileText className="w-5 h-5" />
-                        報價單版型設定
+                        {t("pdfTemplate.title")}
                     </CardTitle>
                     <CardDescription>
-                        自訂報價單 PDF 上的文字、版面與顯示內容。未調整的欄位維持預設樣式。
+                        {t("pdfTemplate.description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="flex flex-wrap gap-2">
                     <Button onClick={handleSave} disabled={isSaving}>
                         {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        儲存
+                        {t("common.save")}
                     </Button>
                     <Button variant="outline" onClick={handlePreview} disabled={isPreviewing}>
                         {isPreviewing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Eye className="w-4 h-4 mr-2" />}
-                        預覽範例
+                        {t("pdfTemplate.preview")}
                     </Button>
                     <Button variant="outline" onClick={handleReset} disabled={isSaving}>
                         <RotateCcw className="w-4 h-4 mr-2" />
-                        還原預設值
+                        {t("pdfTemplate.reset")}
                     </Button>
                 </CardContent>
             </Card>
@@ -268,15 +271,15 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             {previewUrl && (
                 <Card>
                     <CardHeader>
-                        <CardTitle className="text-base">範例預覽</CardTitle>
+                        <CardTitle className="text-base">{t("pdfTemplate.previewTitle")}</CardTitle>
                         <CardDescription>
-                            使用虛構的範例帳單產生，反映目前畫面上的設定（不必先儲存）。
+                            {t("pdfTemplate.previewDescription")}
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         <iframe
                             src={previewUrl}
-                            title="報價單版型預覽"
+                            title={t("pdfTemplate.previewFrameTitle")}
                             className="w-full h-[600px] rounded-md border"
                         />
                     </CardContent>
@@ -285,14 +288,14 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
 
             {/* 文字標籤 */}
             {pdfLabelGroups.map((group) => (
-                <Card key={group.title}>
+                <Card key={group.titleKey}>
                     <CardHeader>
-                        <CardTitle className="text-base">{group.title}</CardTitle>
+                        <CardTitle className="text-base">{t(group.titleKey)}</CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 sm:grid-cols-2">
                         {group.keys.map((key) => (
                             <div key={key} className="space-y-1.5">
-                                <Label htmlFor={`label-${key}`}>{labelNames[key]}</Label>
+                                <Label htmlFor={`label-${key}`}>{t(labelNameKeys[key])}</Label>
                                 <Input
                                     id={`label-${key}`}
                                     value={template.labels[key]}
@@ -308,12 +311,12 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             {/* 版面 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">版面</CardTitle>
-                    <CardDescription>單位為 PDF 的點 (pt)，A4 寬約 595pt、高約 842pt。</CardDescription>
+                    <CardTitle className="text-base">{t("pdfTemplate.layout.title")}</CardTitle>
+                    <CardDescription>{t("pdfTemplate.layout.description")}</CardDescription>
                 </CardHeader>
                 <CardContent className="grid gap-4 sm:grid-cols-2">
                     <div className="space-y-1.5">
-                        <Label htmlFor="page-size">紙張大小</Label>
+                        <Label htmlFor="page-size">{t("pdfTemplate.layout.pageSize")}</Label>
                         <Select
                             value={template.layout.pageSize}
                             onValueChange={(v) =>
@@ -336,7 +339,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                     </div>
                     {layoutNumberFields.map((f) => (
                         <div key={f.key} className="space-y-1.5">
-                            <Label htmlFor={`layout-${f.key}`}>{f.name}</Label>
+                            <Label htmlFor={`layout-${f.key}`}>{t(f.nameKey)}</Label>
                             <Input
                                 id={`layout-${f.key}`}
                                 inputMode="decimal"
@@ -351,9 +354,9 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             {/* 欄寬 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">品項表格欄寬</CardTitle>
+                    <CardTitle className="text-base">{t("pdfTemplate.columns.title")}</CardTitle>
                     <CardDescription>
-                        以百分比設定，總和必須等於 100%。目前：
+                        {t("pdfTemplate.columns.description")}
                         <span className={columnSumOk ? "text-foreground" : "text-red-600 dark:text-red-400 font-semibold"}>
                             {" "}{Math.round(columnSum * 100) / 100}%
                         </span>
@@ -362,7 +365,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                 <CardContent className="grid gap-4 sm:grid-cols-3">
                     {columnFields.map((c) => (
                         <div key={c.key} className="space-y-1.5">
-                            <Label htmlFor={`col-${c.key}`}>{c.name}</Label>
+                            <Label htmlFor={`col-${c.key}`}>{t(c.nameKey)}</Label>
                             <Input
                                 id={`col-${c.key}`}
                                 inputMode="decimal"
@@ -382,25 +385,27 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             {/* 顯示內容 */}
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">顯示內容</CardTitle>
+                    <CardTitle className="text-base">{t("pdfTemplate.options.title")}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="grid gap-3 sm:grid-cols-2">
-                        {toggles.map((t) => (
-                            <div key={t.key} className="flex items-center gap-2">
+                        {toggles.map((toggle) => (
+                            <div key={toggle.key} className="flex items-center gap-2">
                                 <Checkbox
-                                    id={`toggle-${t.key}`}
-                                    checked={template.options[t.key as ToggleKey]}
-                                    onCheckedChange={(checked) => setOption(t.key as ToggleKey, checked === true)}
+                                    id={`toggle-${toggle.key}`}
+                                    checked={template.options[toggle.key]}
+                                    onCheckedChange={(checked) => setOption(toggle.key, checked === true)}
                                 />
-                                <Label htmlFor={`toggle-${t.key}`} className="font-normal">{t.name}</Label>
+                                <Label htmlFor={`toggle-${toggle.key}`} className="font-normal">
+                                    {t(toggle.nameKey)}
+                                </Label>
                             </div>
                         ))}
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1.5">
-                            <Label htmlFor="currency-symbol">金額符號</Label>
+                            <Label htmlFor="currency-symbol">{t("pdfTemplate.options.currencySymbol")}</Label>
                             <Input
                                 id="currency-symbol"
                                 value={template.options.currencySymbol}
@@ -408,7 +413,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                             />
                         </div>
                         <div className="space-y-1.5">
-                            <Label htmlFor="date-format">日期格式</Label>
+                            <Label htmlFor="date-format">{t("pdfTemplate.options.dateFormat")}</Label>
                             <Input
                                 id="date-format"
                                 value={template.options.dateFormat}
@@ -419,12 +424,12 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
                     </div>
 
                     <div className="space-y-1.5">
-                        <Label htmlFor="footer-note">附註／條款</Label>
+                        <Label htmlFor="footer-note">{t("pdfTemplate.options.footerNote")}</Label>
                         <Textarea
                             id="footer-note"
                             rows={3}
                             value={template.options.footerNote}
-                            placeholder="例如：本報價單有效期 30 天。"
+                            placeholder={t("pdfTemplate.options.footerNotePlaceholder")}
                             onChange={(e) => setOption("footerNote", e.target.value)}
                         />
                     </div>

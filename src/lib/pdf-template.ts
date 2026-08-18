@@ -13,6 +13,7 @@
 
 import { z } from "zod";
 import { format } from "date-fns";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 export const PDF_TEMPLATE_CONFIG_KEY = "pdf_template";
 
@@ -314,33 +315,36 @@ export function formatPdfDate(date: Date | string, options: PdfOptions): string 
     }
 }
 
-/** 設定畫面用的欄位分組資訊（放這裡是為了讓標籤鍵值只有一份定義） */
-export const pdfLabelGroups: { title: string; keys: PdfLabelKey[] }[] = [
-    { title: "表頭", keys: ["documentTitle", "date", "invoiceNumber"] },
+/**
+ * 設定畫面用的欄位分組（放這裡是為了讓標籤鍵值只有一份定義）。
+ * 分組標題本身是介面文字，所以存的是文案鍵而不是寫死的字串。
+ */
+export const pdfLabelGroups: { titleKey: MessageKey; keys: PdfLabelKey[] }[] = [
+    { titleKey: "pdfTemplate.groups.header", keys: ["documentTitle", "date", "invoiceNumber"] },
     {
-        title: "買賣雙方",
+        titleKey: "pdfTemplate.groups.parties",
         keys: [
             "clientBlock", "providerBlock", "companyName", "taxId",
             "contactName", "phone", "email", "address",
         ],
     },
     {
-        title: "品項表格",
+        titleKey: "pdfTemplate.groups.items",
         keys: [
             "serviceSection", "reimbursementSection", "itemName", "itemContent",
             "quantity", "unitPrice", "lineTotal", "itemNote",
         ],
     },
     {
-        title: "合計",
+        titleKey: "pdfTemplate.groups.totals",
         keys: ["subtotal", "tax", "serviceTotal", "reimbursementTotal", "grandTotal"],
     },
     {
-        title: "收款資訊",
+        titleKey: "pdfTemplate.groups.bank",
         keys: [
             "bankSection", "bankCurrency", "bankName", "bankBranch",
             "bankAccountNumber", "bankAccountHolder",
         ],
     },
-    { title: "簽章與其他", keys: ["signatureClient", "signatureProvider", "emptyValue"] },
+    { titleKey: "pdfTemplate.groups.signature", keys: ["signatureClient", "signatureProvider", "emptyValue"] },
 ];

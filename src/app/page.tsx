@@ -5,10 +5,12 @@ import { RecentActivity } from "@/components/recent-activity";
 import { MonthlyReconciliationHistory } from "@/components/monthly-reconciliation-history";
 import { DashboardTodoList } from "@/components/dashboard-todo-list";
 import { FadeIn } from "@/components/ui/motion";
+import { getT } from "@/lib/i18n/server";
 
 export const revalidate = 0;
 
 export default async function Home() {
+  const t = await getT();
   const [stats, monthlyRevenue, activity, reminders] = await Promise.all([
     getDashboardStats(),
     getMonthlyRevenue(6),
@@ -21,9 +23,9 @@ export default async function Home() {
       <FadeIn>
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-3xl font-bold tracking-tight">概覽</h2>
+            <h2 className="text-3xl font-bold tracking-tight">{t("dashboard.title")}</h2>
             <p className="text-muted-foreground">
-              歡迎回來！這裡是您的財務概況。
+              {t("dashboard.subtitle")}
             </p>
           </div>
         </div>

@@ -15,11 +15,13 @@ import { SystemMonitor } from "@/components/system-monitor";
 import { SecurityDashboard } from "@/components/security-dashboard";
 import { Tabs, TabsContent } from "@/components/ui/tabs";
 import { SettingsTabsList } from "@/components/settings-tabs-list";
+import { getT } from "@/lib/i18n/server";
 
 // Force dynamic rendering to avoid build-time database access
 export const dynamic = 'force-dynamic';
 
 export default async function SettingsPage() {
+    const t = await getT();
     const companies = await getCompanies();
     const parserTemplates = await getParserTemplates();
     const invoiceItemTemplates = await getInvoiceItemTemplates();
@@ -29,9 +31,9 @@ export default async function SettingsPage() {
     return (
         <div className="space-y-6">
             <div>
-                <h2 className="text-3xl font-bold tracking-tight">系統設定</h2>
+                <h2 className="text-3xl font-bold tracking-tight">{t("settings.title")}</h2>
                 <p className="text-muted-foreground">
-                    管理公司資訊、銀行帳戶及解析模板。
+                    {t("settings.subtitle")}
                 </p>
             </div>
 

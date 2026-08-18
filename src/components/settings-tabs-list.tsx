@@ -5,10 +5,12 @@ import { Building2, FileCode2, DatabaseBackup, FileText, FileSignature, Info, Al
 import { useSettingsReminder } from "@/hooks/use-settings-reminder";
 import { NotificationDot } from "@/components/ui/notification-dot";
 import { useHiddenMode } from "@/store/use-hidden-mode";
+import { useT } from "@/lib/i18n/context";
 
 export function SettingsTabsList() {
     const { showCompanyReminder, showInvoiceItemReminder, showParserReminder } = useSettingsReminder();
     const isHiddenModeEnabled = useHiddenMode((state) => state.isEnabled);
+    const t = useT();
 
     return (
         <aside className="w-full md:w-64 shrink-0">
@@ -18,7 +20,7 @@ export function SettingsTabsList() {
                     className="relative justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <Building2 className="w-4 h-4 mr-2" />
-                    公司管理
+                    {t("settings.tabs.company")}
                     <NotificationDot show={showCompanyReminder} size="sm" position="inline" />
                 </TabsTrigger>
                 <TabsTrigger
@@ -26,7 +28,7 @@ export function SettingsTabsList() {
                     className="relative justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <FileCode2 className="w-4 h-4 mr-2" />
-                    銀行明細解析管理
+                    {t("settings.tabs.parser")}
                     <NotificationDot show={showParserReminder} size="sm" position="inline" />
                 </TabsTrigger>
                 <TabsTrigger
@@ -34,7 +36,7 @@ export function SettingsTabsList() {
                     className="relative justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <FileText className="w-4 h-4 mr-2" />
-                    帳單項目管理
+                    {t("settings.tabs.invoiceItems")}
                     <NotificationDot show={showInvoiceItemReminder} size="sm" position="inline" />
                 </TabsTrigger>
                 <TabsTrigger
@@ -42,14 +44,14 @@ export function SettingsTabsList() {
                     className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <FileSignature className="w-4 h-4 mr-2" />
-                    報價單版型
+                    {t("settings.tabs.pdfTemplate")}
                 </TabsTrigger>
                 <TabsTrigger
                     value="notifications"
                     className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <MessageSquare className="w-4 h-4 mr-2" />
-                    通知文案設定
+                    {t("settings.tabs.notifications")}
                 </TabsTrigger>
                 {isHiddenModeEnabled && (
                     <>
@@ -58,14 +60,14 @@ export function SettingsTabsList() {
                             className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                         >
                             <Activity className="w-4 h-4 mr-2" />
-                            系統監控
+                            {t("settings.tabs.monitoring")}
                         </TabsTrigger>
                         <TabsTrigger
                             value="security"
                             className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                         >
                             <Shield className="w-4 h-4 mr-2" />
-                            安全審計
+                            {t("settings.tabs.security")}
                         </TabsTrigger>
                     </>
                 )}
@@ -74,21 +76,21 @@ export function SettingsTabsList() {
                     className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <DatabaseBackup className="w-4 h-4 mr-2" />
-                    資料備份與還原
+                    {t("settings.tabs.backup")}
                 </TabsTrigger>
                 <TabsTrigger
                     value="about"
                     className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
                 >
                     <Info className="w-4 h-4 mr-2" />
-                    關於
+                    {t("settings.tabs.about")}
                 </TabsTrigger>
                 <TabsTrigger
                     value="danger"
                     className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground text-red-600 dark:text-red-400"
                 >
                     <AlertTriangle className="w-4 h-4 mr-2" />
-                    Danger Zone
+                    {t("settings.tabs.danger")}
                 </TabsTrigger>
             </TabsList>
         </aside>

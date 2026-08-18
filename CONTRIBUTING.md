@@ -54,3 +54,63 @@ npx prisma migrate dev --name 描述性名稱
 
 `prisma/dev.db` 是**空白的初始資料庫**，請勿把使用中、含有營運資料的
 資料庫 commit 回來。
+
+
+## 介面語言（i18n）
+
+介面支援繁體中文與英文，預設繁中。切換在導覽列右上角，偏好存在
+`luk-locale` cookie —— 用 cookie 而非 localStorage，是因為 server component
+也要知道語言（`<html lang>`、伺服器端算好的頁面文字）。
+
+沒有使用 next-intl 之類的套件：`xlsx` 相依指向 SheetJS CDN，在擋住該網域的
+環境下 `npm install` 會整個失敗，等於不能再新增相依。需要的功能自己寫大約
+一百行，沒必要讓安裝流程更脆弱。
+
+### 檔案
+
+| 路徑 | 用途 |
+|---|---|
+| `src/lib/i18n/messages/zh-TW.ts` | 文案基準，也是型別來源 |
+| `src/lib/i18n/messages/en.ts` | 英文文案，鍵必須與基準完全一致 |
+| `src/lib/i18n/context.tsx` | client 端：`useT()`、`useLocale()`、`useSetLocale()`、`useFormat()` |
+| `src/lib/i18n/server.ts` | server component 用：`getLocale()`、`getT()` |
+
+### 加一則文案
+
+1. 先加在 `zh-TW.ts`，再加在 `en.ts`。少一個鍵 TypeScript 就會報錯。
+2. 在元件裡用：
+
+```tsx
+// client component
+const t = useT();
+<h2>{t("dashboard.title")}</h2>
+
+// server component
+const t = await getT();
+<h2>{t("dashboard.title")}</h2>
+```
+
+3. 需要代入變數時用 `{name}` 佔位符：`t("todo.count", { n: 3 })`。
+
+鍵值是型別安全的點分路徑，打錯字編譯不過。查不到的鍵會直接顯示鍵名
+（例如畫面上出現 `nav.dashboard`），方便一眼認出漏翻。
+
+### 日期與數字
+
+不要寫死 `toLocaleDateString('zh-TW')`，改用 `useFormat()`，
+它會跟著目前語言走。
+
+### 目前進度
+
+介面外框（導覽列、四個頁面標題）、概覽頁、設定頁分頁與報價單版型設定
+已完成雙語。其餘畫面仍是寫死的中文，改的方式與上面完全相同 ——
+把字串搬進兩個文案檔，元件改用 `t()`。
+
+用這行找還沒處理的檔案：
+
+```bash
+grep -rlE "[一-龥]" src --include=*.tsx | grep -v ".test."
+```
+
+用到 `useT()` 的元件在測試裡要用 `renderWithLocale()`（`src/test/i18n.tsx`）
+而不是 `render()`，否則會因為找不到 Provider 而失敗。

@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp, DollarSign, AlertCircle, Building2, FileText, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
+import { useT } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
 type Stats = {
     totalReceivables: number;
@@ -16,9 +18,18 @@ type Stats = {
 };
 
 export function DashboardKPIs({ stats }: { stats: Stats }) {
-    const kpis = [
+    const t = useT();
+    const kpis: {
+        titleKey: MessageKey;
+        value: number;
+        icon: typeof FileText;
+        color: string;
+        bgColor: string;
+        href: string;
+        isCount?: boolean;
+    }[] = [
         {
-            title: "本月應收",
+            titleKey: "dashboard.kpi.billedThisMonth",
             value: stats.thisMonthBilled,
             icon: FileText,
             color: "text-blue-600",
@@ -26,7 +37,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             href: "/invoicing",
         },
         {
-            title: "本月實收",
+            titleKey: "dashboard.kpi.collectedThisMonth",
             value: stats.thisMonthCollected,
             icon: CheckCircle2,
             color: "text-green-600",
@@ -34,7 +45,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             href: "/reconciliation#summary",
         },
         {
-            title: "未銷帳",
+            titleKey: "dashboard.kpi.outstanding",
             value: stats.outstandingBalance,
             icon: AlertCircle,
             color: "text-amber-600",
@@ -42,7 +53,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             href: "/reconciliation#summary",
         },
         {
-            title: "總應收帳款",
+            titleKey: "dashboard.kpi.totalReceivables",
             value: stats.totalReceivables,
             icon: DollarSign,
             color: "text-purple-600",
@@ -50,7 +61,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             href: "/invoicing",
         },
         {
-            title: "客戶數",
+            titleKey: "dashboard.kpi.companies",
             value: stats.totalCompanies,
             icon: Building2,
             color: "text-indigo-600",
@@ -59,7 +70,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             href: "/settings",
         },
         {
-            title: "帳單總數",
+            titleKey: "dashboard.kpi.invoices",
             value: stats.totalInvoices,
             icon: TrendingUp,
             color: "text-pink-600",
@@ -74,10 +85,10 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
             {kpis.map((kpi) => {
                 const Icon = kpi.icon;
                 const CardElement = (
-                    <Card key={kpi.title} className={kpi.href ? "transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer h-full" : "h-full"}>
+                    <Card key={kpi.titleKey} className={kpi.href ? "transition-all hover:shadow-md hover:scale-[1.02] cursor-pointer h-full" : "h-full"}>
                         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2 p-4">
                             <CardTitle className="text-xs font-medium text-muted-foreground">
-                                {kpi.title}
+                                {t(kpi.titleKey)}
                             </CardTitle>
                             <div className={`p-1.5 rounded-lg ${kpi.bgColor}`}>
                                 <Icon className={`w-3 h-3 ${kpi.color}`} />
@@ -95,7 +106,7 @@ export function DashboardKPIs({ stats }: { stats: Stats }) {
 
                 if (kpi.href) {
                     return (
-                        <Link href={kpi.href} key={kpi.title}>
+                        <Link href={kpi.href} key={kpi.titleKey}>
                             {CardElement}
                         </Link>
                     );

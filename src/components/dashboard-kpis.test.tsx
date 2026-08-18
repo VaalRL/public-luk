@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
+import { renderWithLocale } from '@/test/i18n';
 import { DashboardKPIs } from './dashboard-kpis';
 
 const mockStats = {
@@ -14,7 +15,7 @@ const mockStats = {
 describe('DashboardKPIs Component', () => {
     describe('Rendering', () => {
         it('should render all KPI cards', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             expect(screen.getByText('本月應收')).toBeInTheDocument();
             expect(screen.getByText('本月實收')).toBeInTheDocument();
@@ -25,7 +26,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should display correct values', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             // Currency values should have $ and be formatted
             expect(screen.getByText('$150,000')).toBeInTheDocument(); // thisMonthBilled
@@ -46,7 +47,7 @@ describe('DashboardKPIs Component', () => {
                 totalReceivables: 1234567,
             };
 
-            render(<DashboardKPIs stats={largeStats} />);
+            renderWithLocale(<DashboardKPIs stats={largeStats} />);
             expect(screen.getByText('$1,234,567')).toBeInTheDocument();
         });
 
@@ -60,7 +61,7 @@ describe('DashboardKPIs Component', () => {
                 totalInvoices: 0,
             };
 
-            render(<DashboardKPIs stats={zeroStats} />);
+            renderWithLocale(<DashboardKPIs stats={zeroStats} />);
 
             // Should render $0 for currency values
             const currencyZeros = screen.getAllByText('$0');
@@ -74,7 +75,7 @@ describe('DashboardKPIs Component', () => {
 
     describe('Links', () => {
         it('should render links for KPIs with href', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const links = screen.getAllByRole('link');
 
@@ -83,7 +84,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should have correct href attributes', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const links = screen.getAllByRole('link');
             const hrefs = links.map(link => link.getAttribute('href'));
@@ -96,7 +97,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should only link to routes that exist', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const validRoutes = ['/invoicing', '/reconciliation', '/settings', '/dashboard'];
             const hrefs = screen.getAllByRole('link').map(link => link.getAttribute('href'));
@@ -110,7 +111,7 @@ describe('DashboardKPIs Component', () => {
 
     describe('Icons', () => {
         it('should render icons for each KPI', () => {
-            const { container } = render(<DashboardKPIs stats={mockStats} />);
+            const { container } = renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             // Each KPI should have an icon (svg element)
             const icons = container.querySelectorAll('svg');
@@ -118,7 +119,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should apply correct color classes to icons', () => {
-            const { container } = render(<DashboardKPIs stats={mockStats} />);
+            const { container } = renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const icons = container.querySelectorAll('svg');
 
@@ -134,7 +135,7 @@ describe('DashboardKPIs Component', () => {
 
     describe('Styling', () => {
         it('should apply hover effects to cards with links', () => {
-            const { container } = render(<DashboardKPIs stats={mockStats} />);
+            const { container } = renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const cards = container.querySelectorAll('[data-slot="card"]');
 
@@ -145,7 +146,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should use monospace font for values', () => {
-            const { container } = render(<DashboardKPIs stats={mockStats} />);
+            const { container } = renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const values = container.querySelectorAll('.font-mono');
             expect(values.length).toBeGreaterThan(0);
@@ -154,7 +155,7 @@ describe('DashboardKPIs Component', () => {
 
     describe('Accessibility', () => {
         it('should have proper heading structure', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             // Card titles should be present
             const titles = [
@@ -172,7 +173,7 @@ describe('DashboardKPIs Component', () => {
         });
 
         it('should render links that are keyboard accessible', () => {
-            render(<DashboardKPIs stats={mockStats} />);
+            renderWithLocale(<DashboardKPIs stats={mockStats} />);
 
             const links = screen.getAllByRole('link');
 
@@ -189,7 +190,7 @@ describe('DashboardKPIs Component', () => {
                 outstandingBalance: -1000,
             };
 
-            render(<DashboardKPIs stats={negativeStats} />);
+            renderWithLocale(<DashboardKPIs stats={negativeStats} />);
             expect(screen.getByText('$-1,000')).toBeInTheDocument();
         });
 
@@ -199,7 +200,7 @@ describe('DashboardKPIs Component', () => {
                 totalReceivables: 999999999,
             };
 
-            render(<DashboardKPIs stats={largeStats} />);
+            renderWithLocale(<DashboardKPIs stats={largeStats} />);
             expect(screen.getByText('$999,999,999')).toBeInTheDocument();
         });
 
@@ -209,7 +210,7 @@ describe('DashboardKPIs Component', () => {
                 thisMonthBilled: 1234.56,
             };
 
-            render(<DashboardKPIs stats={decimalStats} />);
+            renderWithLocale(<DashboardKPIs stats={decimalStats} />);
             // toLocaleString() will format decimals
             expect(screen.getByText(/\$1,234/)).toBeInTheDocument();
         });

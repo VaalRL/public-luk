@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/context";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -51,6 +52,7 @@ interface DashboardTodoListProps {
 }
 
 export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
+    const t = useT();
     const { toast } = useToast();
     const router = useRouter();
     const today = startOfDay(new Date());
@@ -101,8 +103,8 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
         } catch (error) {
             console.error("更新狀態失敗:", error);
             toast({
-                title: "更新失敗",
-                description: "無法更新任務狀態，請稍後再試",
+                title: t("dashboard.todo.updateFailed"),
+                description: t("dashboard.todo.updateFailedDescription"),
                 variant: "destructive",
             });
         }
@@ -125,8 +127,8 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
         } catch (error) {
             console.error("創建提醒失敗:", error);
             toast({
-                title: "創建失敗",
-                description: "創建提醒失敗，請稍後再試",
+                title: t("dashboard.todo.createFailed"),
+                description: t("dashboard.todo.createFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -137,12 +139,12 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
     const ReminderItem = ({ reminder, status }: { reminder: Reminder; status: "expired" | "today" | "future" }) => {
         const getInvoiceStatus = (inv: NonNullable<Reminder['invoice']>) => {
             if (inv.status === 'paid') {
-                return <Badge variant="default" className="bg-green-600 text-[10px] h-5 px-1.5">已付清</Badge>;
+                return <Badge variant="default" className="bg-green-600 text-[10px] h-5 px-1.5">{t("dashboard.todo.paid")}</Badge>;
             }
             if (inv.paidAmount > 0) {
-                return <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-[10px] h-5 px-1.5">部分付款</Badge>;
+                return <Badge variant="secondary" className="bg-orange-100 text-orange-700 text-[10px] h-5 px-1.5">{t("dashboard.todo.partial")}</Badge>;
             }
-            return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 text-[10px] h-5 px-1.5">未付款</Badge>;
+            return <Badge variant="outline" className="text-red-600 border-red-200 bg-red-50 text-[10px] h-5 px-1.5">{t("dashboard.todo.unpaid")}</Badge>;
         };
 
         return (
@@ -169,7 +171,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                             <>
                                 <div className="font-medium truncate">{reminder.invoice.company.name}</div>
                                 <div className="text-sm text-muted-foreground flex items-center gap-2 flex-wrap">
-                                    <span className="truncate">{reminder.invoice.invoiceNumber || "無帳單號碼"}</span>
+                                    <span className="truncate">{reminder.invoice.invoiceNumber || t("dashboard.todo.noInvoiceNumber")}</span>
                                     <span>•</span>
                                     <span>${reminder.invoice.totalAmount.toLocaleString()}</span>
                                     {getInvoiceStatus(reminder.invoice)}
@@ -185,7 +187,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                             <>
                                 {/* 個人提醒：顯示標題 */}
                                 <div className="font-medium truncate">
-                                    📝 {reminder.title || reminder.text || "待辦任務"}
+                                    📝 {reminder.title || reminder.text || t("dashboard.todo.fallbackTitle")}
                                 </div>
                                 {/* 個人提醒：顯示描述 */}
                                 {reminder.description && (
@@ -206,7 +208,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                     </div>
                     {reminder.invoice && (
                         <Link href={`/invoicing?id=${reminder.invoiceId}`} className="text-xs text-primary hover:underline block mt-1">
-                            查看帳單
+                            {t("dashboard.todo.viewInvoice")}
                         </Link>
                     )}
                 </div>
@@ -230,12 +232,12 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                     animate={{ scale: 1, opacity: 1 }}
                                     className="text-green-600 flex items-center gap-2"
                                 >
-                                    🎉 今日全部完成！
+                                    {t("dashboard.todo.allDone")}
                                 </motion.span>
                             ) : (
                                 <>
                                     <CalendarCheck className="w-5 h-5" />
-                                    待辦事項
+                                    {t("dashboard.todo.title")}
                                 </>
                             )}
                         </CardTitle>
@@ -247,7 +249,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                 className="gap-1"
                             >
                                 <ArrowUpDown className="w-4 h-4" />
-                                {sortByCompletion ? "按日期" : "按狀態"}
+                                {sortByCompletion ? t("dashboard.todo.sortByDate") : t("dashboard.todo.sortByStatus")}
                             </Button>
                             <Button
                                 size="sm"
@@ -263,7 +265,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                     <Tabs defaultValue="today" className="w-full">
                         <TabsList className="grid w-full grid-cols-3 mb-4">
                             <TabsTrigger value="expired" className="relative">
-                                過期
+                                {t("dashboard.todo.expired")}
                                 {expiredIncompleteCount > 0 && (
                                     <Badge variant="destructive" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
                                         {expiredIncompleteCount}
@@ -271,7 +273,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                 )}
                             </TabsTrigger>
                             <TabsTrigger value="today" className="relative">
-                                今日
+                                {t("dashboard.todo.today")}
                                 {todayIncompleteCount > 0 && (
                                     <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] bg-yellow-500 text-white hover:bg-yellow-600">
                                         {todayIncompleteCount}
@@ -279,7 +281,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                 )}
                             </TabsTrigger>
                             <TabsTrigger value="future">
-                                未來
+                                {t("dashboard.todo.future")}
                                 {futureIncompleteCount > 0 && (
                                     <Badge variant="secondary" className="ml-2 h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
                                         {futureIncompleteCount}
@@ -292,7 +294,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                             {expiredReminders.length > 0 ? (
                                 expiredReminders.map((r) => <ReminderItem key={r.id} reminder={r} status="expired" />)
                             ) : (
-                                <p className="text-center text-muted-foreground py-8">無過期任務</p>
+                                <p className="text-center text-muted-foreground py-8">{t("dashboard.todo.noExpired")}</p>
                             )}
                         </TabsContent>
 
@@ -300,7 +302,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                             {todayReminders.length > 0 ? (
                                 todayReminders.map((r) => <ReminderItem key={r.id} reminder={r} status="today" />)
                             ) : (
-                                <p className="text-center text-muted-foreground py-8">今日無任務</p>
+                                <p className="text-center text-muted-foreground py-8">{t("dashboard.todo.noToday")}</p>
                             )}
                         </TabsContent>
 
@@ -308,7 +310,7 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                             {futureReminders.length > 0 ? (
                                 futureReminders.map((r) => <ReminderItem key={r.id} reminder={r} status="future" />)
                             ) : (
-                                <p className="text-center text-muted-foreground py-8">無未來任務</p>
+                                <p className="text-center text-muted-foreground py-8">{t("dashboard.todo.noFuture")}</p>
                             )}
                         </TabsContent>
                     </Tabs>
@@ -317,14 +319,14 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogContent>
                         <DialogHeader>
-                            <DialogTitle>新增待辦任務</DialogTitle>
+                            <DialogTitle>{t("dashboard.todo.add")}</DialogTitle>
                             <DialogDescription>
-                                創建一個不與帳單關聯的待辦任務
+                                {t("dashboard.todo.addDescription")}
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-4">
                             <div className="grid gap-2">
-                                <Label htmlFor="reminder-date">待辦任務日期</Label>
+                                <Label htmlFor="reminder-date">{t("dashboard.todo.date")}</Label>
                                 <Input
                                     id="reminder-date"
                                     type="date"
@@ -334,20 +336,20 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="reminder-title">任務標題（選填）</Label>
+                                <Label htmlFor="reminder-title">{t("dashboard.todo.titleOptional")}</Label>
                                 <Input
                                     id="reminder-title"
-                                    placeholder="例如：聯絡客戶（留空則顯示「待辦任務」）"
+                                    placeholder={t("dashboard.todo.titlePlaceholder")}
                                     value={newReminderTitle}
                                     onChange={(e) => setNewReminderTitle(e.target.value)}
                                     disabled={isCreating}
                                 />
                             </div>
                             <div className="grid gap-2">
-                                <Label htmlFor="reminder-description">任務描述（選填）</Label>
+                                <Label htmlFor="reminder-description">{t("dashboard.todo.descriptionOptional")}</Label>
                                 <Textarea
                                     id="reminder-description"
-                                    placeholder="例如：準備會議資料、確認時間..."
+                                    placeholder={t("dashboard.todo.descriptionPlaceholder")}
                                     value={newReminderDescription}
                                     onChange={(e) => setNewReminderDescription(e.target.value)}
                                     disabled={isCreating}
@@ -361,13 +363,13 @@ export function DashboardTodoList({ reminders }: DashboardTodoListProps) {
                                 onClick={() => setIsDialogOpen(false)}
                                 disabled={isCreating}
                             >
-                                取消
+                                {t("common.cancel")}
                             </Button>
                             <Button
                                 onClick={handleCreateReminder}
                                 disabled={isCreating}
                             >
-                                完成
+                                {t("dashboard.todo.done")}
                             </Button>
                         </DialogFooter>
                     </DialogContent>

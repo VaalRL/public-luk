@@ -7,6 +7,9 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { Navbar } from "@/components/navbar";
 import { Toaster } from "@/components/ui/toaster";
+import { LocaleProvider } from "@/lib/i18n/context";
+import { LOCALE_TAGS } from "@/lib/i18n/config";
+import { getLocale, getT } from "@/lib/i18n/server";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,18 +21,24 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Luk - 銷帳系統",
-  description: "自動化銷帳與帳單管理系統",
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const t = await getT();
+  return {
+    title: `Luk - ${t("nav.reconciliation")}`,
+    description: t("reconciliation.subtitle"),
+  };
+}
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  // 語言存在 cookie，這裡讀一次後往下傳；<html lang> 也跟著換
+  const locale = await getLocale();
+
   return (
-    <html lang="zh-TW" suppressHydrationWarning>
+    <html lang={LOCALE_TAGS[locale]} suppressHydrationWarning>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased font-sans`}
       >
@@ -39,15 +48,17 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <div className="relative flex min-h-screen flex-col">
-            <Navbar />
-            <main className="flex-1">
-              <div className="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-6">
-                {children}
-              </div>
-            </main>
-          </div>
-          <Toaster />
+          <LocaleProvider locale={locale}>
+            <div className="relative flex min-h-screen flex-col">
+              <Navbar />
+              <main className="flex-1">
+                <div className="container mx-auto max-w-7xl px-4 md:px-6 lg:px-8 py-6">
+                  {children}
+                </div>
+              </main>
+            </div>
+            <Toaster />
+          </LocaleProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -8,11 +8,13 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { getT } from "@/lib/i18n/server";
 
 // Force dynamic rendering to avoid build-time database access
 export const dynamic = 'force-dynamic';
 
 export default async function ReconciliationPage() {
+    const t = await getT();
     const [transactions, invoices, notificationTemplates, overpayments] = await Promise.all([
         getUnmatchedTransactions(),
         getAllInvoices(),
@@ -24,26 +26,26 @@ export default async function ReconciliationPage() {
         <div className="space-y-8">
             <div>
                 <div className="flex items-center gap-2">
-                    <h2 className="text-3xl font-bold tracking-tight">銷帳作業</h2>
+                    <h2 className="text-3xl font-bold tracking-tight">{t("reconciliation.title")}</h2>
                     <TooltipProvider>
                         <Tooltip>
                             <TooltipTrigger asChild>
                                 <HelpCircle className="h-5 w-5 text-muted-foreground cursor-help" />
                             </TooltipTrigger>
                             <TooltipContent className="max-w-sm">
-                                <p className="font-semibold mb-2">銷帳邏輯說明</p>
+                                <p className="font-semibold mb-2">{t("reconciliation.help.title")}</p>
                                 <ul className="space-y-1 text-sm">
-                                    <li>• 系統會自動匹配銀行交易與帳單</li>
-                                    <li>• 使用 FIFO（先進先出）原則進行匹配</li>
-                                    <li>• 支援部分付款和多筆交易對應單一帳單</li>
-                                    <li>• 可手動調整匹配結果</li>
+                                    <li>• {t("reconciliation.help.autoMatch")}</li>
+                                    <li>• {t("reconciliation.help.fifo")}</li>
+                                    <li>• {t("reconciliation.help.partial")}</li>
+                                    <li>• {t("reconciliation.help.manual")}</li>
                                 </ul>
                             </TooltipContent>
                         </Tooltip>
                     </TooltipProvider>
                 </div>
                 <p className="text-muted-foreground mt-2">
-                    匹配銀行交易與帳單，自動化銷帳流程。
+                    {t("reconciliation.subtitle")}
                 </p>
             </div>
 

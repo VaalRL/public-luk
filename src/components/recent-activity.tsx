@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/context";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { FileText, CheckCircle2, Clock } from "lucide-react";
@@ -36,13 +37,15 @@ export function RecentActivity({
     recentInvoices: RecentInvoice[];
     recentReconciliations: RecentReconciliation[];
 }) {
+    const t = useT();
+
     return (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             <Card>
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <FileText className="w-5 h-5" />
-                        最近建立的帳單
+                        {t("dashboard.activity.recentInvoices")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -50,7 +53,7 @@ export function RecentActivity({
                         <div className="space-y-4">
                             {recentInvoices.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-8">
-                                    尚無帳單記錄
+                                    {t("dashboard.activity.noInvoices")}
                                 </p>
                             ) : (
                                 recentInvoices.map((invoice) => (
@@ -61,7 +64,7 @@ export function RecentActivity({
                                         <div className="flex-1">
                                             <p className="font-medium">{invoice.company.name}</p>
                                             <p className="text-sm text-muted-foreground font-mono">
-                                                {invoice.invoiceNumber || "無號碼"}
+                                                {invoice.invoiceNumber || t("dashboard.activity.noNumber")}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <Clock className="w-3 h-3 text-muted-foreground" />
@@ -90,7 +93,7 @@ export function RecentActivity({
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <CheckCircle2 className="w-5 h-5" />
-                        最近對帳記錄
+                        {t("dashboard.activity.recentReconciliations")}
                     </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -98,7 +101,7 @@ export function RecentActivity({
                         <div className="space-y-4">
                             {recentReconciliations.length === 0 ? (
                                 <p className="text-sm text-muted-foreground text-center py-8">
-                                    尚無對帳記錄
+                                    {t("dashboard.activity.noReconciliations")}
                                 </p>
                             ) : (
                                 recentReconciliations.map((rec) => (
@@ -109,7 +112,7 @@ export function RecentActivity({
                                         <div className="flex-1">
                                             <p className="font-medium">{rec.invoice.company.name}</p>
                                             <p className="text-sm text-muted-foreground font-mono">
-                                                {rec.invoice.invoiceNumber || "無號碼"}
+                                                {rec.invoice.invoiceNumber || t("dashboard.activity.noNumber")}
                                             </p>
                                             <div className="flex items-center gap-2 mt-1">
                                                 <Clock className="w-3 h-3 text-muted-foreground" />
@@ -123,7 +126,7 @@ export function RecentActivity({
                                         </div>
                                         <div className="text-right">
                                             <Badge variant="default" className="bg-green-600">
-                                                已收款
+                                                {t("dashboard.activity.received")}
                                             </Badge>
                                             <p className="font-mono font-bold mt-1">
                                                 ${rec.amount.toLocaleString()}

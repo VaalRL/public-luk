@@ -6,6 +6,7 @@ import { ChevronLeft, ChevronRight, FileText, ArrowRightLeft, Archive } from "lu
 import { getReconciliationsByMonth } from "@/app/actions/dashboard";
 import { getAllSnapshots } from "@/app/actions/snapshot";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import {
@@ -40,6 +41,7 @@ interface ReconciliationRecord {
 }
 
 export function MonthlyReconciliationHistory() {
+    const t = useT();
     const [currentMonth, setCurrentMonth] = useState(startOfMonth(new Date()));
     const [records, setRecords] = useState<ReconciliationRecord[]>([]);
     const [loading, setLoading] = useState(false);
@@ -91,14 +93,14 @@ export function MonthlyReconciliationHistory() {
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                 <CardTitle className="text-xl font-bold flex items-center gap-2">
                     <ArrowRightLeft className="h-5 w-5" />
-                    歷史銷帳記錄 (History)
+                    {t("dashboard.history.title")}
                 </CardTitle>
                 <div className="flex items-center space-x-2">
                     <Button variant="outline" size="icon" onClick={handlePrevMonth}>
                         <ChevronLeft className="h-4 w-4" />
                     </Button>
                     <div className="min-w-[100px] text-center font-medium">
-                        {format(currentMonth, "yyyy年 MM月")}
+                        {format(currentMonth, t("dashboard.history.monthFormat"))}
                     </div>
                     <Button
                         variant="outline"
@@ -117,13 +119,13 @@ export function MonthlyReconciliationHistory() {
                             <Link href={`/reconciliation/${currentMonthStr}`}>
                                 <Button variant="outline" size="sm" className="gap-2 text-amber-700 border-amber-200 hover:bg-amber-50">
                                     <Archive className="w-4 h-4" />
-                                    檢視此月份對帳記錄
+                                    {t("dashboard.history.viewMonth")}
                                 </Button>
                             </Link>
                         )}
                     </div>
                     <Badge variant="secondary" className="text-sm">
-                        本月銷帳總額: ${totalAmount.toLocaleString()}
+                        {t("dashboard.history.monthTotal")}: ${totalAmount.toLocaleString()}
                     </Badge>
                 </div>
 
@@ -131,24 +133,24 @@ export function MonthlyReconciliationHistory() {
                     <Table>
                         <TableHeader>
                             <TableRow>
-                                <TableHead>日期</TableHead>
-                                <TableHead>公司名稱</TableHead>
-                                <TableHead>帳單號碼</TableHead>
-                                <TableHead>交易備註</TableHead>
-                                <TableHead className="text-right">銷帳金額</TableHead>
+                                <TableHead>{t("dashboard.history.date")}</TableHead>
+                                <TableHead>{t("dashboard.history.company")}</TableHead>
+                                <TableHead>{t("dashboard.history.invoiceNumber")}</TableHead>
+                                <TableHead>{t("dashboard.history.transactionNote")}</TableHead>
+                                <TableHead className="text-right">{t("dashboard.history.settledAmount")}</TableHead>
                             </TableRow>
                         </TableHeader>
                         <TableBody>
                             {loading ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center">
-                                        載入中...
+                                        {t("common.loading")}
                                     </TableCell>
                                 </TableRow>
                             ) : records.length === 0 ? (
                                 <TableRow>
                                     <TableCell colSpan={5} className="h-24 text-center text-muted-foreground">
-                                        本月尚無銷帳記錄
+                                        {t("dashboard.history.empty")}
                                     </TableCell>
                                 </TableRow>
                             ) : (

@@ -15,25 +15,29 @@ import {
 import { useState } from "react";
 import { useSettingsReminder } from "@/hooks/use-settings-reminder";
 import { NotificationDot } from "@/components/ui/notification-dot";
+import { LanguageToggle } from "@/components/language-toggle";
+import { useT } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages";
 
-const navItems = [
+// 標題存的是文案鍵，實際文字在元件裡依目前語言取出
+const navItems: { titleKey: MessageKey; href: string; icon: typeof LayoutDashboard }[] = [
     {
-        title: "概覽",
+        titleKey: "nav.dashboard",
         href: "/",
         icon: LayoutDashboard,
     },
     {
-        title: "立帳管理",
+        titleKey: "nav.invoicing",
         href: "/invoicing",
         icon: FileText,
     },
     {
-        title: "銷帳作業",
+        titleKey: "nav.reconciliation",
         href: "/reconciliation",
         icon: Scale,
     },
     {
-        title: "系統設定",
+        titleKey: "nav.settings",
         href: "/settings",
         icon: Settings,
     },
@@ -66,8 +70,7 @@ export function Navbar() {
     const pathname = usePathname();
     const [isOpen, setIsOpen] = useState(false);
     const { showAnyReminder } = useSettingsReminder();
-
-    const _currentTitle = navItems.find((item) => item.href === pathname)?.title || "Luk";
+    const t = useT();
 
     return (
         <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -101,7 +104,7 @@ export function Navbar() {
                                         "relative transition-colors hover:text-foreground/80",
                                         pathname === item.href ? "text-foreground" : "text-foreground/60"
                                     )}
-                                    title={item.title}
+                                    title={t(item.titleKey)}
                                 >
                                     <Icon className="w-5 h-5" />
                                     <NotificationDot show={showAnyReminder} size="sm" position="top-right" />
@@ -119,15 +122,17 @@ export function Navbar() {
                                     pathname === item.href ? "text-foreground" : "text-foreground/60"
                                 )}
                             >
-                                {item.title}
+                                {t(item.titleKey)}
                             </Link>
                         );
                     })}
+                    <LanguageToggle />
                     <ThemeToggle />
                 </nav>
 
                 {/* Mobile Menu */}
                 <div className="flex md:hidden items-center gap-2">
+                    <LanguageToggle />
                     <ThemeToggle />
                     <Sheet open={isOpen} onOpenChange={setIsOpen}>
                         <SheetTrigger asChild>
@@ -136,7 +141,7 @@ export function Navbar() {
                                 className="px-0 text-base hover:bg-transparent focus-visible:bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
                             >
                                 <Menu className="h-5 w-5" />
-                                <span className="sr-only">Toggle Menu</span>
+                                <span className="sr-only">{t("nav.toggleMenu")}</span>
                             </Button>
                         </SheetTrigger>
                         <SheetContent side="right" className="pr-0">
@@ -167,7 +172,7 @@ export function Navbar() {
                                         )}
                                     >
                                         <item.icon className="mr-2 h-4 w-4" />
-                                        {item.title}
+                                        {t(item.titleKey)}
                                         {item.href === "/settings" && (
                                             <NotificationDot show={showAnyReminder} size="sm" position="inline" />
                                         )}
