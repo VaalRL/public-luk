@@ -574,6 +574,8 @@ export const zhTW = {
         saveError: "儲存變更時發生錯誤",
         snapshotSaveFailed: "無法儲存對帳記錄",
         unexpected: "發生未預期的錯誤",
+        concurrentMatch: "交易已被其他作業處理（預期 {expected} 筆，實際可用 {available} 筆）",
+        overpaymentFrom: "來自交易 {description} 的溢繳",
     },
     bankAccountDialog: {
         title: "新增銀行帳號",

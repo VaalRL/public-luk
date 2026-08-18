@@ -8,6 +8,7 @@ import { Prisma, Transaction, ReconciliationRecord } from "@prisma/client";
 import { extractLast5Digits, findBestAccountMatch } from "@/lib/fuzzy-match";
 import { resolveAccountOwners, accountsOwnedBy } from "@/lib/account-resolution";
 import { syncInvoiceBalances, syncInvoiceBalance } from "@/lib/invoice-balance";
+import { getT } from "@/lib/i18n/server";
 
 /** 帶有銀行帳號的公司資料（自動對帳的歸戶需要） */
 type CompanyWithAccounts = Prisma.CompanyGetPayload<{ include: { bankAccounts: true } }>;
@@ -310,6 +311,9 @@ export async function createReconciliation(rawData: unknown): Promise<ActionResu
 export async function autoMatchTransactions(rawData: unknown): Promise<ActionResult<AutoMatchResult>> {
     return withValidation(
         async ({ transactionIds }) => {
+            // 錯誤訊息會直接進使用者的 toast，溢繳說明會寫進資料庫並顯示在列表上，
+            // 兩者都要跟著介面語言走
+            const t = await getT();
             // 1. Fetch all requested transactions
             const transactions = await prisma.transaction.findMany({
                 where: {
@@ -684,7 +688,10 @@ export async function autoMatchTransactions(rawData: unknown): Promise<ActionRes
 
                         if (stillOpen.length !== companyTransactions.length) {
                             throw new ConcurrentMatchError(
-                                `交易已被其他作業處理（預期 ${companyTransactions.length} 筆，實際可用 ${stillOpen.length} 筆）`
+                                t("autoMatch.concurrentMatch", {
+                                    expected: companyTransactions.length,
+                                    available: stillOpen.length,
+                                })
                             );
                         }
 
@@ -746,7 +753,7 @@ export async function autoMatchTransactions(rawData: unknown): Promise<ActionRes
                                     last5Digits: last5Digits,
                                     amount: source.amount,
                                     month: month,
-                                    description: `來自交易 ${tx.description || ''} 的溢繳`,
+                                    description: t("autoMatch.overpaymentFrom", { description: tx.description || '' }),
                                 }
                             }),
                             prisma.transaction.update({

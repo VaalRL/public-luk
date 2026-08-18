@@ -579,6 +579,8 @@ export const en: Messages = {
         saveError: "An error occurred while saving your changes",
         snapshotSaveFailed: "The settlement record could not be saved",
         unexpected: "Something unexpected went wrong",
+        concurrentMatch: "These transactions were handled by another operation (expected {expected}, {available} still available)",
+        overpaymentFrom: "Overpayment from transaction {description}",
     },
     bankAccountDialog: {
         title: "Add bank account",
