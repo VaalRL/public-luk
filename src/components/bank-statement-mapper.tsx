@@ -13,6 +13,8 @@ import {
 } from "@dnd-kit/core";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { useT } from "@/lib/i18n/context";
+import type { MessageKey } from "@/lib/i18n/messages";
 import {
   Table,
   TableBody,
@@ -25,15 +27,15 @@ import { Badge } from "@/components/ui/badge";
 import { X } from "lucide-react";
 import type { CellValue } from "@/types/spreadsheet";
 
-// Define the fields we need to map
+// 要對應的欄位。label 是畫面上的可拖拉標籤，因此存文案鍵。
 const REQUIRED_FIELDS = [
-  { id: "date", label: "交易日期" },
-  { id: "description", label: "摘要" },
-  { id: "withdrawal", label: "支出" },
-  { id: "deposit", label: "存入" },
-  { id: "balance", label: "餘額" },
-  { id: "note", label: "備註/後五碼" },
-];
+  { id: "date", labelKey: "mapper.fieldDate" },
+  { id: "description", labelKey: "mapper.fieldDescription" },
+  { id: "withdrawal", labelKey: "mapper.fieldWithdrawal" },
+  { id: "deposit", labelKey: "mapper.fieldDeposit" },
+  { id: "balance", labelKey: "mapper.fieldBalance" },
+  { id: "note", labelKey: "mapper.fieldNote" },
+] as const;
 
 /** 儲存格可能是 Date/boolean，渲染前一律轉成文字 */
 const renderCell = (cell: CellValue): string =>
@@ -50,6 +52,7 @@ export interface BankStatementMapperProps {
 }
 
 export function BankStatementMapper({ onSave, initialMappings = {}, initialFile }: BankStatementMapperProps) {
+  const t = useT();
   const [step, setStep] = useState<'upload' | 'select-header' | 'mapping'>('upload');
   const [file, setFile] = useState<File | null>(initialFile || null);
   const [previewData, setPreviewData] = useState<CellValue[][]>([]);
@@ -62,7 +65,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
   const [allData, setAllData] = useState<CellValue[][]>([]);
 
   const findHeaderRow = (data: CellValue[][]): { headerIndex: number; headerRow: CellValue[] } => {
-    // Search for row containing "帳務日期" or similar keywords
+    // 比對銀行明細檔案裡的欄位標題，屬於資料內容而非介面文字，不隨語言改變
     const keywords = ["帳務日期", "交易日期", "日期"];
 
     for (let i = 0; i < Math.min(data.length, 20); i++) {
@@ -165,7 +168,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
     setMappings(newMappings);
   };
 
-  const DraggableField = ({ field }: { field: { id: string; label: string } }) => {
+  const DraggableField = ({ field }: { field: { id: string; labelKey: MessageKey } }) => {
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
       id: field.id,
     });
@@ -187,7 +190,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
         className={`p-2 mb-2 bg-primary text-primary-foreground rounded cursor-move shadow-sm text-sm font-medium ${isMapped ? "opacity-50" : ""
           }`}
       >
-        {field.label}
+        {t(field.labelKey)}
       </div>
     );
   };
@@ -216,7 +219,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
           <span>{children}</span>
           {mappedField && (
             <Badge variant="secondary" className="flex items-center gap-1">
-              {mappedField.label}
+              {t(mappedField.labelKey)}
               <button
                 type="button"
                 className="ml-1 hover:text-destructive focus:outline-none"
@@ -246,7 +249,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
         >
           <input {...getInputProps()} />
           <p className="text-lg text-muted-foreground">
-            拖拉 Excel 檔案至此，或點擊上傳
+            {t("mapper.dropHint")}
           </p>
         </div>
       )}
@@ -254,9 +257,9 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
       {step === 'select-header' && (
         <Card>
           <CardHeader>
-            <CardTitle>步驟 1：選擇標題列</CardTitle>
+            <CardTitle>{t("mapper.step1Title")}</CardTitle>
             <p className="text-sm text-muted-foreground">
-              請點擊包含欄位名稱（如：日期、摘要、金額）的橫列。
+              {t("mapper.step1Description")}
             </p>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -288,10 +291,10 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
                 setStep('upload');
                 setFile(null);
               }}>
-                重新上傳
+                {t("mapper.reupload")}
               </Button>
               <Button onClick={handleHeaderConfirm}>
-                確認並繼續
+                {t("mapper.confirmContinue")}
               </Button>
             </div>
           </CardContent>
@@ -305,11 +308,11 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
             <div className="col-span-3 space-y-4">
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-base">欄位標籤</CardTitle>
+                  <CardTitle className="text-base">{t("mapper.fieldLabels")}</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <p className="text-sm text-muted-foreground mb-4">
-                    請將標籤拖拉至右側表格對應的欄位標題上。
+                    {t("mapper.dragHint")}
                   </p>
                   {REQUIRED_FIELDS.map((field) => (
                     <DraggableField key={field.id} field={field} />
@@ -323,7 +326,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
                   setStep('select-header');
                 }}
               >
-                上一步 (重選標題列)
+                {t("mapper.back")}
               </Button>
 
               {onSave && (
@@ -332,7 +335,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
                   onClick={() => onSave(mappings, headerRowIndex)}
                   disabled={!Object.values(mappings).includes("deposit") || !Object.values(mappings).includes("withdrawal")}
                 >
-                  儲存解析設定
+                  {t("mapper.saveConfig")}
                 </Button>
               )}
             </div>
@@ -341,9 +344,9 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
             <div className="col-span-9">
               <Card>
                 <CardHeader>
-                  <CardTitle>步驟 2：欄位對應 ({file.name})</CardTitle>
+                  <CardTitle>{t("mapper.step2Title", { file: file.name })}</CardTitle>
                   <p className="text-sm text-muted-foreground mt-2">
-                    ✓ 已選擇第 {headerRowIndex + 1} 列為標題列
+                    {t("mapper.headerChosen", { n: headerRowIndex + 1 })}
                   </p>
                 </CardHeader>
                 <CardContent className="overflow-auto">
@@ -353,7 +356,7 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
                         {headerRow?.map((headerCell, index) => (
                           <DroppableHeader key={index} index={index}>
                             <div className="text-xs text-muted-foreground mb-1">
-                              欄位 {String.fromCharCode(65 + index)}
+                              {t("mapper.columnLetter", { letter: String.fromCharCode(65 + index) })}
                             </div>
                             <div className="font-medium text-foreground">
                               {renderCell(headerCell) || "-"}
@@ -382,7 +385,10 @@ export function BankStatementMapper({ onSave, initialMappings = {}, initialFile 
           <DragOverlay>
             {activeId ? (
               <div className="p-2 bg-primary text-primary-foreground rounded shadow-lg opacity-80 cursor-grabbing">
-                {REQUIRED_FIELDS.find((f) => f.id === activeId)?.label}
+                {(() => {
+                  const field = REQUIRED_FIELDS.find((f) => f.id === activeId);
+                  return field ? t(field.labelKey) : null;
+                })()}
               </div>
             ) : null}
           </DragOverlay>

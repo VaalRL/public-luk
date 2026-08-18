@@ -9,6 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table";
+import { useT } from "@/lib/i18n/context";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Pencil, Trash2, Plus } from "lucide-react";
@@ -27,26 +28,27 @@ export function CompanyList({
     onDelete,
     onAddBankAccount,
 }: CompanyListProps) {
+    const t = useT();
     return (
         <Table>
             <TableHeader>
                 <TableRow>
-                    <TableHead>公司名稱</TableHead>
-                    <TableHead>簡稱</TableHead>
-                    <TableHead>統編</TableHead>
-                    <TableHead>聯絡人</TableHead>
+                    <TableHead>{t("companyList.name")}</TableHead>
+                    <TableHead>{t("companyList.shortName")}</TableHead>
+                    <TableHead>{t("companyList.taxId")}</TableHead>
+                    <TableHead>{t("companyList.contact")}</TableHead>
                     <TableHead>Email</TableHead>
-                    <TableHead>電話</TableHead>
-                    <TableHead>銀行帳號</TableHead>
-                    <TableHead>帳單數</TableHead>
-                    <TableHead className="text-right">操作</TableHead>
+                    <TableHead>{t("companyList.phone")}</TableHead>
+                    <TableHead>{t("companyList.bankAccounts")}</TableHead>
+                    <TableHead>{t("companyList.invoiceCount")}</TableHead>
+                    <TableHead className="text-right">{t("companyList.actions")}</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
                 {companies.length === 0 ? (
                     <TableRow>
                         <TableCell colSpan={9} className="text-center text-muted-foreground">
-                            尚無公司資料
+                            {t("companyList.empty")}
                         </TableCell>
                     </TableRow>
                 ) : (
@@ -67,7 +69,7 @@ export function CompanyList({
                                             </Badge>
                                         ))
                                     ) : (
-                                        <span className="text-muted-foreground text-sm">無</span>
+                                        <span className="text-muted-foreground text-sm">{t("companyList.none")}</span>
                                     )}
                                     <Button
                                         variant="ghost"
@@ -76,7 +78,7 @@ export function CompanyList({
                                         className="h-6 text-xs"
                                     >
                                         <Plus className="h-3 w-3 mr-1" />
-                                        新增帳號
+                                        {t("companyList.addAccount")}
                                     </Button>
                                 </div>
                             </TableCell>

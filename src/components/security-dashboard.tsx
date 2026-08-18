@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/context';
 import { Shield, AlertTriangle, Activity, RefreshCw, Ban } from 'lucide-react';
 import type { SecurityEvent } from '@/lib/security-audit';
 
@@ -18,6 +19,7 @@ interface SecurityStats {
 }
 
 export function SecurityDashboard() {
+    const t = useT();
     const [events, setEvents] = React.useState<SecurityEvent[]>([]);
     const [stats, setStats] = React.useState<SecurityStats | null>(null);
     const [loading, setLoading] = React.useState(true);
@@ -62,16 +64,16 @@ export function SecurityDashboard() {
 
     const getTypeLabel = (type: string) => {
         const labels: Record<string, string> = {
-            'rate_limit_exceeded': '速率限制超出',
-            'csrf_validation_failed': 'CSRF 驗證失敗',
-            'invalid_input_detected': '無效輸入檢測',
-            'unauthorized_access_attempt': '未授權訪問嘗試',
-            'suspicious_file_upload': '可疑檔案上傳',
-            'sql_injection_attempt': 'SQL 注入嘗試',
-            'xss_attempt': 'XSS 攻擊嘗試',
-            'authentication_failed': '認證失敗',
-            'privilege_escalation_attempt': '權限提升嘗試',
-            'data_breach_attempt': '資料洩露嘗試',
+            'rate_limit_exceeded': t("security.eventRateLimit"),
+            'csrf_validation_failed': t("security.eventCsrf"),
+            'invalid_input_detected': t("security.eventInvalidInput"),
+            'unauthorized_access_attempt': t("security.eventUnauthorized"),
+            'suspicious_file_upload': t("security.eventSuspiciousUpload"),
+            'sql_injection_attempt': t("security.eventSqlInjection"),
+            'xss_attempt': t("security.eventXss"),
+            'authentication_failed': t("security.eventAuthFailed"),
+            'privilege_escalation_attempt': t("security.eventPrivilegeEscalation"),
+            'data_breach_attempt': t("security.eventDataBreach"),
         };
         return labels[type] || type;
     };
@@ -80,12 +82,12 @@ export function SecurityDashboard() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">安全儀表板</h2>
-                    <p className="text-muted-foreground">監控系統安全事件和威脅</p>
+                    <h2 className="text-3xl font-bold tracking-tight">{t("security.title")}</h2>
+                    <p className="text-muted-foreground">{t("security.description")}</p>
                 </div>
                 <Button onClick={fetchData} disabled={loading} variant="outline" size="sm">
                     <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    刷新
+                    {t("security.refresh")}
                 </Button>
             </div>
 
@@ -93,33 +95,33 @@ export function SecurityDashboard() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">總事件數</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("security.totalEvents")}</CardTitle>
                         <Shield className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats?.total || 0}</div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            已阻擋: {stats?.blocked || 0}
+                            {t("security.blocked")}: {stats?.blocked || 0}
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">過去 24 小時</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("security.last24h")}</CardTitle>
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                         <div className="text-2xl font-bold">{stats?.last24Hours || 0}</div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            過去 1 小時: {stats?.lastHour || 0}
+                            {t("security.lastHour")}: {stats?.lastHour || 0}
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">關鍵事件</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("security.criticalEvents")}</CardTitle>
                         <AlertTriangle className="h-4 w-4 text-red-500" />
                     </CardHeader>
                     <CardContent>
@@ -127,14 +129,14 @@ export function SecurityDashboard() {
                             {stats?.bySeverity?.critical || 0}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            高嚴重性: {stats?.bySeverity?.high || 0}
+                            {t("security.highSeverity")}: {stats?.bySeverity?.high || 0}
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">阻擋率</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("security.blockRate")}</CardTitle>
                         <Ban className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -151,8 +153,8 @@ export function SecurityDashboard() {
             {/* 嚴重性分布 */}
             <Card>
                 <CardHeader>
-                    <CardTitle>事件嚴重性分布</CardTitle>
-                    <CardDescription>按嚴重性分類的安全事件</CardDescription>
+                    <CardTitle>{t("security.severityDistribution")}</CardTitle>
+                    <CardDescription>{t("security.severityDistributionDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
@@ -174,14 +176,14 @@ export function SecurityDashboard() {
             {/* 最近事件 */}
             <Card>
                 <CardHeader>
-                    <CardTitle>最近安全事件</CardTitle>
-                    <CardDescription>最近 50 個安全相關事件</CardDescription>
+                    <CardTitle>{t("security.recentEvents")}</CardTitle>
+                    <CardDescription>{t("security.recentEventsDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="space-y-3">
                         {events.length === 0 ? (
                             <p className="text-sm text-muted-foreground text-center py-4">
-                                暫無安全事件
+                                {t("security.empty")}
                             </p>
                         ) : (
                             events.slice(0, 10).map((event) => (
@@ -199,15 +201,15 @@ export function SecurityDashboard() {
                                             </span>
                                             {event.blocked && (
                                                 <Badge variant="outline" className="text-green-600">
-                                                    已阻擋
+                                                    {t("security.blocked")}
                                                 </Badge>
                                             )}
                                         </div>
                                         <div className="text-xs text-muted-foreground space-y-1">
                                             {event.ip && <div>IP: {event.ip}</div>}
-                                            {event.action && <div>動作: {event.action}</div>}
+                                            {event.action && <div>{t("security.action")}: {event.action}</div>}
                                             <div>
-                                                時間: {new Date(event.timestamp).toLocaleString('zh-TW')}
+                                                {t("security.time")}: {new Date(event.timestamp).toLocaleString('zh-TW')}
                                             </div>
                                         </div>
                                     </div>
@@ -222,8 +224,8 @@ export function SecurityDashboard() {
             {stats?.byType && Object.keys(stats.byType).length > 0 && (
                 <Card>
                     <CardHeader>
-                        <CardTitle>事件類型分布</CardTitle>
-                        <CardDescription>各類安全事件的數量</CardDescription>
+                        <CardTitle>{t("security.typeDistribution")}</CardTitle>
+                        <CardDescription>{t("security.typeDistributionDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent>
                         <div className="space-y-2">

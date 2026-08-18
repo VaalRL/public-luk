@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { useT } from "@/lib/i18n/context";
 import { autoMatchTransactions, deleteBankStatement, updateTransaction } from "@/app/actions/reconciliation";
 import { saveReconciliationSnapshot } from "@/app/actions/snapshot";
 import { Transaction, Invoice } from "@/components/features/reconciliation/types";
@@ -15,6 +16,7 @@ export function useReconciliation({
     initialInvoices,
 }: UseReconciliationProps) {
     const router = useRouter();
+    const t = useT();
 
     // Local UI state
     const [isMatching, setIsMatching] = useState(false);
@@ -104,22 +106,22 @@ export function useReconciliation({
 
                 addNotification({
                     type: 'success',
-                    title: "自動銷帳完成",
-                    message: `成功匹配 ${result.data.results?.reduce((acc, r) => acc + r.matchesCount, 0) || 0} 筆交易`,
+                    title: t("autoMatch.done"),
+                    message: t("autoMatch.matched", { n: result.data.results?.reduce((acc, r) => acc + r.matchesCount, 0) || 0 }),
                 });
             } else {
                 addNotification({
                     type: 'error',
-                    title: "自動銷帳失敗",
-                    message: !result.success && 'error' in result ? result.error : "發生未知錯誤",
+                    title: t("autoMatch.failed"),
+                    message: !result.success && 'error' in result ? result.error : t("autoMatch.unknownError"),
                 });
             }
         } catch (error) {
             console.error("Auto match error:", error);
             addNotification({
                 type: 'error',
-                title: "錯誤",
-                message: "執行自動銷帳時發生錯誤",
+                title: t("common.saveFailed"),
+                message: t("autoMatch.error"),
             });
         } finally {
             setIsMatching(false);
@@ -138,8 +140,8 @@ export function useReconciliation({
             if (!bankStatementId) {
                 addNotification({
                     type: 'error',
-                    title: "移除失敗",
-                    message: "目前沒有可移除的銀行明細",
+                    title: t("autoMatch.removeFailed"),
+                    message: t("autoMatch.nothingToRemove"),
                 });
                 return;
             }
@@ -152,16 +154,16 @@ export function useReconciliation({
             } else {
                 addNotification({
                     type: 'error',
-                    title: "移除失敗",
-                    message: result.error || "無法移除銀行明細",
+                    title: t("autoMatch.removeFailed"),
+                    message: result.error || t("autoMatch.removeError"),
                 });
             }
         } catch (error) {
             console.error("Delete error:", error);
             addNotification({
                 type: 'error',
-                title: "錯誤",
-                message: "移除銀行明細時發生錯誤",
+                title: t("common.saveFailed"),
+                message: t("autoMatch.removeUnexpected"),
             });
         } finally {
             closeDialog();
@@ -195,8 +197,8 @@ export function useReconciliation({
             console.error("Save error:", error);
             addNotification({
                 type: 'error',
-                title: "儲存失敗",
-                message: "儲存變更時發生錯誤",
+                title: t("common.saveFailed"),
+                message: t("autoMatch.saveError"),
             });
         } finally {
             setIsEditing(false);
@@ -213,15 +215,15 @@ export function useReconciliation({
             await saveReconciliationSnapshot(snapshotMonth);
             addNotification({
                 type: 'success',
-                title: "儲存成功",
-                message: `已儲存 ${snapshotMonth} 的對帳記錄`,
+                title: t("common.saveSuccess"),
+                message: t("autoMatch.snapshotSaved", { month: snapshotMonth }),
             });
         } catch (error) {
             console.error("Save snapshot error:", error);
             addNotification({
                 type: 'error',
-                title: "儲存失敗",
-                message: "無法儲存對帳記錄",
+                title: t("common.saveFailed"),
+                message: t("autoMatch.snapshotSaveFailed"),
             });
         } finally {
             closeDialog();

@@ -1,19 +1,36 @@
 "use client";
 
+import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { useT } from "@/lib/i18n/context";
+import { useFormat, useT } from "@/lib/i18n/context";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from "recharts";
 import { TrendingUp } from "lucide-react";
 
 type MonthlyData = {
+    /** "yyyy-MM" */
     month: string;
-    monthLabel: string;
     billed: number;
     collected: number;
 };
 
 export function RevenueChart({ data }: { data: MonthlyData[] }) {
     const t = useT();
+    const fmt = useFormat();
+
+    // 月份標籤在這裡才依語言產生。原本是伺服器端寫死 "MM月"，
+    // 切成英文之後 X 軸仍是「03月」。
+    const chartData = React.useMemo(
+        () => data.map((d) => {
+            const [year, month] = d.month.split("-").map(Number);
+            // 用 "yyyy-MM" 直接 new Date() 會被當成 UTC 午夜，
+            // 在負時區會顯示成上個月，所以明確指定年月日
+            const label = Number.isFinite(year) && Number.isFinite(month)
+                ? fmt.date(new Date(year, month - 1, 1), { month: "short" })
+                : d.month;
+            return { ...d, monthLabel: label };
+        }),
+        [data, fmt]
+    );
 
     return (
         <Card>
@@ -25,7 +42,7 @@ export function RevenueChart({ data }: { data: MonthlyData[] }) {
             </CardHeader>
             <CardContent>
                 <ResponsiveContainer width="100%" height={350}>
-                    <BarChart data={data}>
+                    <BarChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                         <XAxis
                             dataKey="monthLabel"

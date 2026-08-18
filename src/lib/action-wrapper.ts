@@ -159,12 +159,53 @@ export async function withValidation<TInput, TOutput>(
     rawData: unknown
 ): Promise<ActionResult<TOutput>> {
     return withErrorHandling(async () => {
-        // 驗證輸入資料
-        const validatedData = validator.parse(rawData);
+        let validatedData: TInput;
+        try {
+            validatedData = validator.parse(rawData);
+        } catch (error) {
+            // Zod 的 error.message 是一整包 JSON，直接回傳的話使用者會在
+            // toast 裡看到 [{"code":"too_small",...}]。轉成「欄位：訊息」，
+            // 並把 schema 裡存的文案鍵翻成目前語言的文字。
+            throw new ValidationError(await formatValidationError(error));
+        }
 
-        // 執行業務邏輯
         return await action(validatedData);
     }, context);
+}
+
+/** Zod 的 issue 陣列 —— 只取實際會用到的欄位，不引入 zod 的型別 */
+interface ValidationIssue {
+    path?: (string | number)[];
+    message?: string;
+}
+
+function isZodError(error: unknown): error is { issues: ValidationIssue[] } {
+    return (
+        typeof error === "object" && error !== null && "issues" in error &&
+        Array.isArray((error as { issues: unknown }).issues)
+    );
+}
+
+async function formatValidationError(error: unknown): Promise<string> {
+    if (!isZodError(error)) {
+        return error instanceof Error ? error.message : "Validation failed";
+    }
+
+    const { getT } = await import("./i18n/server");
+    const t = await getT();
+
+    return error.issues
+        .map((issue) => {
+            const field = issue.path?.join(".") ?? "";
+            // schema 存的是文案鍵；查不到時 translate() 會原樣回傳，
+            // 對於 zod 內建的英文訊息剛好也是正確行為
+            const message = issue.message
+                ? t(issue.message as Parameters<typeof t>[0])
+                : "";
+            return field ? `${field}: ${message}` : message;
+        })
+        .filter(Boolean)
+        .join("; ");
 }
 
 /**

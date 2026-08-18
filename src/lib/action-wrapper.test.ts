@@ -113,6 +113,45 @@ describe('action-wrapper', () => {
             expect(mockAction).not.toHaveBeenCalled();
         });
 
+        // 以前 zod 的 error.message 被原封不動丟回前端，使用者會在 toast 裡
+        // 看到 [{"code":"too_small","path":["name"],...}] 這種 JSON
+        it('把驗證錯誤整理成「欄位: 訊息」，不外流 JSON', async () => {
+            const mockAction = vi.fn(async (data) => data);
+
+            const result = await withValidation(
+                mockAction,
+                'testAction',
+                z.object({ name: z.string().min(1, 'validation.companyNameRequired') }),
+                { name: '' }
+            );
+
+            expect(result.success).toBe(false);
+            if (!result.success) {
+                expect(result.error).toBe('name: 公司名稱不可為空');
+                expect(result.error).not.toContain('{');
+            }
+        });
+
+        it('多個欄位出錯時全部列出', async () => {
+            const mockAction = vi.fn(async (data) => data);
+
+            const result = await withValidation(
+                mockAction,
+                'testAction',
+                z.object({
+                    name: z.string().min(1, 'validation.companyNameRequired'),
+                    email: z.string().email('validation.invalidEmail'),
+                }),
+                { name: '', email: 'not-an-email' }
+            );
+
+            expect(result.success).toBe(false);
+            if (!result.success) {
+                expect(result.error).toContain('name: 公司名稱不可為空');
+                expect(result.error).toContain('email: 無效的電子郵件格式');
+            }
+        });
+
         it('should handle missing required fields', async () => {
             const mockAction = vi.fn(async (data) => data);
             const invalidData = { name: 'John' }; // missing age

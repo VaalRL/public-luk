@@ -4,6 +4,7 @@ import { join, resolve, sep } from "path";
 import { existsSync } from "fs";
 import { randomUUID } from "crypto";
 import { validateImage } from "@/lib/image-validator";
+import { getT } from "@/lib/i18n/server";
 import { logSecurityEvent } from "@/lib/logger";
 
 /**
@@ -69,8 +70,14 @@ export async function POST(request: NextRequest) {
         // 沿用既有的圖片驗證（格式與大小），不要另外實作一份
         const validation = validateImage(file);
         if (!validation.isValid) {
+            // 驗證訊息是文案鍵，依請求者的語言翻成文字再回傳
+            const t = await getT();
             return NextResponse.json(
-                { error: validation.errors.join(", ") },
+                {
+                    error: validation.errors
+                        .map((issue) => t(issue.key as Parameters<typeof t>[0], issue.params))
+                        .join(", "),
+                },
                 { status: 400 }
             );
         }

@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { fixPaidAmountDiscrepancies, recalculateAllPaidAmounts } from "@/app/actions/data-fix";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 
 // 直接從 server action 推導結果型別，避免與實作脫鉤
 type FixResult = Awaited<ReturnType<typeof fixPaidAmountDiscrepancies>>;
@@ -13,6 +14,7 @@ type RecalcResult = Awaited<ReturnType<typeof recalculateAllPaidAmounts>>;
 
 export function DataFixSection() {
     const { toast } = useToast();
+    const t = useT();
     const [fixing, setFixing] = useState(false);
     const [recalculating, setRecalculating] = useState(false);
     const [fixResult, setFixResult] = useState<FixResult | null>(null);
@@ -26,8 +28,8 @@ export function DataFixSection() {
         } catch (error) {
             console.error(error);
             toast({
-                title: "修復失敗",
-                description: "修復失敗，請稍後再試",
+                title: t("dataFix.fixFailed"),
+                description: t("dataFix.fixFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -43,8 +45,8 @@ export function DataFixSection() {
         } catch (error) {
             console.error(error);
             toast({
-                title: "計算失敗",
-                description: "重新計算失敗，請稍後再試",
+                title: t("dataFix.recalcFailed"),
+                description: t("dataFix.recalcFailedDescription"),
                 variant: "destructive",
             });
         } finally {
@@ -55,39 +57,39 @@ export function DataFixSection() {
     return (
         <div className="space-y-6">
             <div>
-                <h3 className="text-lg font-medium">數據修復工具</h3>
-                <p className="text-sm text-muted-foreground">修復帳單付款金額與銷帳記錄的不一致問題</p>
+                <h3 className="text-lg font-medium">{t("dataFix.title")}</h3>
+                <p className="text-sm text-muted-foreground">{t("dataFix.description")}</p>
             </div>
 
             <Alert>
                 <AlertDescription>
-                    <strong>注意：</strong>這些工具會修改數據庫中的數據。建議在執行前先備份數據庫。
+                    <strong>{t("dataFix.warningLabel")}</strong>{t("dataFix.warningText")}
                 </AlertDescription>
             </Alert>
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">步驟 1：補錄缺失的銷帳記錄</CardTitle>
+                    <CardTitle className="text-base">{t("dataFix.step1Title")}</CardTitle>
                     <CardDescription>
-                        為所有 paidAmount &gt; 0 但缺少對應銷帳記錄的帳單創建補錄記錄
+                        {t("dataFix.step1Description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Button onClick={handleFix} disabled={fixing}>
-                        {fixing ? "修復中..." : "執行修復"}
+                        {fixing ? t("dataFix.step1Running") : t("dataFix.step1Button")}
                     </Button>
 
                     {fixResult && (
                         <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded">
                             <h3 className="font-semibold text-green-800 mb-2">
-                                修復完成！共修復 {fixResult.totalFixed} 筆記錄
+                                {t("dataFix.step1Done", { n: fixResult.totalFixed })}
                             </h3>
                             {fixResult.fixes.length > 0 && (
                                 <div className="space-y-2 text-sm">
                                     {fixResult.fixes.map((fix, idx: number) => (
                                         <div key={idx} className="border-b border-green-100 pb-2">
-                                            <div>帳單號碼: {fix.invoiceNumber || fix.invoiceId}</div>
-                                            <div>補錄金額: ${fix.discrepancy.toLocaleString()}</div>
+                                            <div>{t("dataFix.invoiceNumber")}: {fix.invoiceNumber || fix.invoiceId}</div>
+                                            <div>{t("dataFix.fixedAmount")}: ${fix.discrepancy.toLocaleString()}</div>
                                         </div>
                                     ))}
                                 </div>
@@ -99,32 +101,32 @@ export function DataFixSection() {
 
             <Card>
                 <CardHeader>
-                    <CardTitle className="text-base">步驟 2：重新計算所有帳單的付款金額</CardTitle>
+                    <CardTitle className="text-base">{t("dataFix.step2Title")}</CardTitle>
                     <CardDescription>
-                        根據銷帳記錄重新計算每張帳單的 paidAmount 和 status
+                        {t("dataFix.step2Description")}
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <Button onClick={handleRecalculate} disabled={recalculating}>
-                        {recalculating ? "計算中..." : "重新計算"}
+                        {recalculating ? t("dataFix.step2Running") : t("dataFix.step2Button")}
                     </Button>
 
                     {recalcResult && (
                         <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded">
                             <h3 className="font-semibold text-blue-800 mb-2">
-                                計算完成！共更新 {recalcResult.totalUpdated} 筆記錄
+                                {t("dataFix.step2Done", { n: recalcResult.totalUpdated })}
                             </h3>
                             {recalcResult.updates.length > 0 && (
                                 <div className="space-y-2 text-sm">
                                     {recalcResult.updates.map((update, idx: number) => (
                                         <div key={idx} className="border-b border-blue-100 pb-2">
-                                            <div>帳單號碼: {update.invoiceNumber || update.invoiceId}</div>
+                                            <div>{t("dataFix.invoiceNumber")}: {update.invoiceNumber || update.invoiceId}</div>
                                             <div>
-                                                付款金額: ${update.oldPaidAmount.toLocaleString()} → $
+                                                {t("dataFix.paidAmountLabel")}: ${update.oldPaidAmount.toLocaleString()} → $
                                                 {update.newPaidAmount.toLocaleString()}
                                             </div>
                                             <div>
-                                                狀態: {update.oldStatus} → {update.newStatus}
+                                                {t("dataFix.statusLabel")}: {update.oldStatus} → {update.newStatus}
                                             </div>
                                         </div>
                                     ))}

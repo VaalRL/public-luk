@@ -4,6 +4,7 @@ import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { useT } from '@/lib/i18n/context';
 import { Activity, AlertCircle, CheckCircle, Clock, Database, RefreshCw, TrendingUp } from 'lucide-react';
 
 interface HealthStatus {
@@ -45,6 +46,7 @@ interface ErrorStats {
 }
 
 export function SystemMonitor() {
+    const t = useT();
     const [health, setHealth] = React.useState<HealthStatus | null>(null);
     const [metrics, setMetrics] = React.useState<PerformanceMetrics | null>(null);
     const [errorStats, setErrorStats] = React.useState<ErrorStats | null>(null);
@@ -86,12 +88,12 @@ export function SystemMonitor() {
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <div>
-                    <h2 className="text-3xl font-bold tracking-tight">系統監控</h2>
-                    <p className="text-muted-foreground">即時系統健康狀態和效能指標</p>
+                    <h2 className="text-3xl font-bold tracking-tight">{t("monitor.title")}</h2>
+                    <p className="text-muted-foreground">{t("monitor.description")}</p>
                 </div>
                 <Button onClick={fetchData} disabled={loading} variant="outline" size="sm">
                     <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                    刷新
+                    {t("monitor.refresh")}
                 </Button>
             </div>
 
@@ -99,7 +101,7 @@ export function SystemMonitor() {
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">系統狀態</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("monitor.systemStatus")}</CardTitle>
                         <Activity className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -107,24 +109,24 @@ export function SystemMonitor() {
                             {health?.status === 'healthy' ? (
                                 <>
                                     <CheckCircle className="h-5 w-5 text-green-500" />
-                                    <Badge variant="default" className="bg-green-500">正常</Badge>
+                                    <Badge variant="default" className="bg-green-500">{t("monitor.healthy")}</Badge>
                                 </>
                             ) : (
                                 <>
                                     <AlertCircle className="h-5 w-5 text-red-500" />
-                                    <Badge variant="destructive">異常</Badge>
+                                    <Badge variant="destructive">{t("monitor.unhealthy")}</Badge>
                                 </>
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            環境: {health?.environment || 'N/A'}
+                            {t("monitor.environment")}: {health?.environment || 'N/A'}
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">資料庫</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("monitor.database")}</CardTitle>
                         <Database className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -132,24 +134,24 @@ export function SystemMonitor() {
                             {health?.checks.database.status === 'connected' ? (
                                 <>
                                     <CheckCircle className="h-5 w-5 text-green-500" />
-                                    <Badge variant="default" className="bg-green-500">已連線</Badge>
+                                    <Badge variant="default" className="bg-green-500">{t("monitor.connected")}</Badge>
                                 </>
                             ) : (
                                 <>
                                     <AlertCircle className="h-5 w-5 text-red-500" />
-                                    <Badge variant="destructive">斷線</Badge>
+                                    <Badge variant="destructive">{t("monitor.disconnected")}</Badge>
                                 </>
                             )}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            回應時間: {health?.checks.database.responseTime || 0}ms
+                            {t("monitor.responseTime")}: {health?.checks.database.responseTime || 0}ms
                         </p>
                     </CardContent>
                 </Card>
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">運行時間</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("monitor.uptime")}</CardTitle>
                         <Clock className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -164,7 +166,7 @@ export function SystemMonitor() {
 
                 <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-sm font-medium">錯誤統計</CardTitle>
+                        <CardTitle className="text-sm font-medium">{t("monitor.errorCount")}</CardTitle>
                         <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
@@ -172,7 +174,7 @@ export function SystemMonitor() {
                             {errorStats?.last24Hours || 0}
                         </div>
                         <p className="text-xs text-muted-foreground mt-2">
-                            過去 24 小時
+                            {t("monitor.last24h")}
                         </p>
                     </CardContent>
                 </Card>
@@ -182,8 +184,8 @@ export function SystemMonitor() {
             <div className="grid gap-4 md:grid-cols-2">
                 <Card>
                     <CardHeader>
-                        <CardTitle>記憶體使用量</CardTitle>
-                        <CardDescription>當前記憶體使用情況</CardDescription>
+                        <CardTitle>{t("monitor.memory")}</CardTitle>
+                        <CardDescription>{t("monitor.memoryDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <div className="flex justify-between">
@@ -207,8 +209,8 @@ export function SystemMonitor() {
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>錯誤分類</CardTitle>
-                        <CardDescription>按嚴重性分類的錯誤數量</CardDescription>
+                        <CardTitle>{t("monitor.errorsByType")}</CardTitle>
+                        <CardDescription>{t("monitor.errorsByTypeDescription")}</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-2">
                         <div className="flex justify-between items-center">
@@ -238,25 +240,25 @@ export function SystemMonitor() {
             {/* 系統資訊 */}
             <Card>
                 <CardHeader>
-                    <CardTitle>系統資訊</CardTitle>
-                    <CardDescription>伺服器環境詳情</CardDescription>
+                    <CardTitle>{t("monitor.systemInfo")}</CardTitle>
+                    <CardDescription>{t("monitor.systemInfoDescription")}</CardDescription>
                 </CardHeader>
                 <CardContent>
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         <div>
-                            <p className="text-sm text-muted-foreground">Node 版本</p>
+                            <p className="text-sm text-muted-foreground">{t("monitor.nodeVersion")}</p>
                             <p className="text-sm font-medium">{metrics?.process.nodeVersion || 'N/A'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-muted-foreground">平台</p>
+                            <p className="text-sm text-muted-foreground">{t("monitor.platform")}</p>
                             <p className="text-sm font-medium">{metrics?.process.platform || 'N/A'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-muted-foreground">環境</p>
+                            <p className="text-sm text-muted-foreground">{t("monitor.env")}</p>
                             <p className="text-sm font-medium">{health?.environment || 'N/A'}</p>
                         </div>
                         <div>
-                            <p className="text-sm text-muted-foreground">最後更新</p>
+                            <p className="text-sm text-muted-foreground">{t("monitor.lastUpdated")}</p>
                             <p className="text-sm font-medium">
                                 {health?.timestamp ? new Date(health.timestamp).toLocaleTimeString('zh-TW') : 'N/A'}
                             </p>

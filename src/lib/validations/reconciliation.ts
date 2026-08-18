@@ -1,18 +1,24 @@
 import { z } from "zod";
 
 /**
+ * 驗證訊息存的是「文案鍵」而不是成品字串。
+ * schema 是模組層常數，client 與 server 共用，拿不到語言 context；
+ * 由 withValidation 在伺服器端依請求語言翻成文字後才回傳。
+ */
+
+/**
  * Reconciliation Actions 驗證 Schema
  */
 
 export const createReconciliationSchema = z.object({
-    invoiceId: z.string().uuid("無效的帳單 ID"),
-    transactionId: z.string().uuid("無效的交易 ID"),
-    amount: z.number().positive("金額必須大於 0"),
+    invoiceId: z.string().uuid("validation.invalidInvoiceId"),
+    transactionId: z.string().uuid("validation.invalidTransactionId"),
+    amount: z.number().positive("validation.amountPositive"),
     date: z.date().optional(),
 });
 
 export const updateTransactionSchema = z.object({
-    id: z.string().uuid("無效的交易 ID"),
+    id: z.string().uuid("validation.invalidTransactionId"),
     date: z.date().optional(),
     description: z.string().optional(),
     note: z.string().optional(),
@@ -21,7 +27,7 @@ export const updateTransactionSchema = z.object({
 });
 
 export const autoMatchSchema = z.object({
-    transactionIds: z.array(z.string().uuid("無效的交易 ID")),
+    transactionIds: z.array(z.string().uuid("validation.invalidTransactionId")),
 });
 
 export type CreateReconciliationInput = z.infer<typeof createReconciliationSchema>;

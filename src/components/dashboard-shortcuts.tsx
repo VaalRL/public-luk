@@ -3,13 +3,15 @@
 import Link from "next/link";
 import { FileText, GitCompareArrows, Settings } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/context";
 import {} from "@/components/ui/button";
 
 export function DashboardShortcuts() {
+    const t = useT();
     const shortcuts = [
         {
-            title: "立帳管理",
-            description: "建立帳單",
+            title: t("shortcuts.invoicing"),
+            description: t("shortcuts.invoicingDescription"),
             icon: FileText,
             href: "/invoicing",
             color: "text-green-600",
@@ -17,8 +19,8 @@ export function DashboardShortcuts() {
             hoverColor: "hover:bg-green-50/50",
         },
         {
-            title: "銷帳作業",
-            description: "上傳銀行明細並自動銷帳",
+            title: t("shortcuts.reconciliation"),
+            description: t("shortcuts.reconciliationDescription"),
             icon: GitCompareArrows,
             href: "/reconciliation",
             color: "text-purple-600",
@@ -26,8 +28,8 @@ export function DashboardShortcuts() {
             hoverColor: "hover:bg-purple-50/50",
         },
         {
-            title: "系統設定",
-            description: "管理客戶公司與帳號資料",
+            title: t("shortcuts.settings"),
+            description: t("shortcuts.settingsDescription"),
             icon: Settings,
             href: "/settings",
             color: "text-amber-600",

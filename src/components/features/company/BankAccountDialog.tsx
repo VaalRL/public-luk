@@ -11,6 +11,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/lib/i18n/context";
 import {
     Select,
     SelectContent,
@@ -37,6 +38,7 @@ export function BankAccountDialog({
     onSubmit,
     isSubmitting = false,
 }: BankAccountDialogProps) {
+    const t = useT();
     const handleChange = (field: keyof BankAccountFormData, value: string) => {
         onFormDataChange({
             ...formData,
@@ -53,42 +55,42 @@ export function BankAccountDialog({
         <Dialog open={isOpen} onOpenChange={onClose}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>新增銀行帳號</DialogTitle>
+                    <DialogTitle>{t("bankAccountDialog.title")}</DialogTitle>
                 </DialogHeader>
                 <form onSubmit={handleSubmit} className="space-y-4">
                     <div className="space-y-2">
-                        <Label htmlFor="accountNumber">帳號 *</Label>
+                        <Label htmlFor="accountNumber">{t("bankAccountDialog.accountNumber")} *</Label>
                         <Input
                             id="accountNumber"
                             value={formData.accountNumber}
                             onChange={(e) => handleChange("accountNumber", e.target.value)}
-                            placeholder="請輸入銀行帳號"
+                            placeholder={t("bankAccountDialog.accountNumberPlaceholder")}
                             required
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="branch">分行</Label>
+                        <Label htmlFor="branch">{t("bankAccountDialog.branch")}</Label>
                         <Input
                             id="branch"
                             value={formData.branch}
                             onChange={(e) => handleChange("branch", e.target.value)}
-                            placeholder="請輸入分行名稱"
+                            placeholder={t("bankAccountDialog.branchPlaceholder")}
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="accountHolder">戶名</Label>
+                        <Label htmlFor="accountHolder">{t("bankAccountDialog.holder")}</Label>
                         <Input
                             id="accountHolder"
                             value={formData.accountHolder}
                             onChange={(e) => handleChange("accountHolder", e.target.value)}
-                            placeholder="請輸入戶名"
+                            placeholder={t("bankAccountDialog.holderPlaceholder")}
                         />
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="currency">幣別</Label>
+                        <Label htmlFor="currency">{t("bankAccountDialog.currency")}</Label>
                         <Select
                             value={formData.currency}
                             onValueChange={(value) => handleChange("currency", value)}
@@ -97,22 +99,22 @@ export function BankAccountDialog({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="TWD">TWD (新台幣)</SelectItem>
-                                <SelectItem value="USD">USD (美元)</SelectItem>
-                                <SelectItem value="EUR">EUR (歐元)</SelectItem>
-                                <SelectItem value="JPY">JPY (日圓)</SelectItem>
-                                <SelectItem value="CNY">CNY (人民幣)</SelectItem>
+                                <SelectItem value="TWD">{t("bankAccountDialog.currencyTwd")}</SelectItem>
+                                <SelectItem value="USD">{t("bankAccountDialog.currencyUsd")}</SelectItem>
+                                <SelectItem value="EUR">{t("bankAccountDialog.currencyEur")}</SelectItem>
+                                <SelectItem value="JPY">{t("bankAccountDialog.currencyJpy")}</SelectItem>
+                                <SelectItem value="CNY">{t("bankAccountDialog.currencyCny")}</SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
 
                     <div className="space-y-2">
-                        <Label htmlFor="note">備註</Label>
+                        <Label htmlFor="note">{t("bankAccountDialog.note")}</Label>
                         <Input
                             id="note"
                             value={formData.note}
                             onChange={(e) => handleChange("note", e.target.value)}
-                            placeholder="請輸入備註"
+                            placeholder={t("bankAccountDialog.notePlaceholder")}
                         />
                     </div>
 
@@ -123,10 +125,10 @@ export function BankAccountDialog({
                             onClick={onClose}
                             disabled={isSubmitting}
                         >
-                            取消
+                            {t("common.cancel")}
                         </Button>
                         <Button type="submit" disabled={isSubmitting}>
-                            {isSubmitting ? "新增中..." : "新增"}
+                            {isSubmitting ? t("bankAccountDialog.adding") : t("bankAccountDialog.add")}
                         </Button>
                     </DialogFooter>
                 </form>

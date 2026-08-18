@@ -118,8 +118,8 @@ export async function getMonthlyRevenue(months: number = 6) {
             .reduce((sum, rec) => sum + rec.amount, 0);
 
         data.push({
+            // 標籤交給前端依語言產生（見 revenue-chart.tsx）
             month: format(monthDate, "yyyy-MM"),
-            monthLabel: format(monthDate, "MM月"),
             billed,
             collected,
         });

@@ -3,10 +3,20 @@
  * 確保 Logo 和印章圖片不會過大，影響 PDF 生成效能
  */
 
+/**
+ * 驗證結果的訊息以「文案鍵 + 參數」表示，不是成品字串。
+ * 這個模組同時被伺服器端的上傳 API 使用，那裡拿不到 React 的語言 context，
+ * 由呼叫端自己決定用哪個語言翻譯。
+ */
+export interface ImageIssue {
+    key: string;
+    params?: Record<string, string | number>;
+}
+
 export interface ImageValidationResult {
     isValid: boolean;
-    errors: string[];
-    warnings: string[];
+    errors: ImageIssue[];
+    warnings: ImageIssue[];
     originalSize?: number;
     recommendedMaxSize: number;
 }
@@ -33,21 +43,27 @@ export function validateImage(
     options: ImageOptimizationOptions = {}
 ): ImageValidationResult {
     const opts = { ...DEFAULT_OPTIONS, ...options };
-    const errors: string[] = [];
-    const warnings: string[] = [];
+    const errors: ImageIssue[] = [];
+    const warnings: ImageIssue[] = [];
 
     // 檢查檔案類型
     const validTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
     if (!validTypes.includes(file.type)) {
-        errors.push(`不支援的圖片格式：${file.type}。請使用 JPG、PNG 或 WebP。`);
+        errors.push({ key: "imageValidation.unsupportedFormat", params: { type: file.type } });
     }
 
     // 檢查檔案大小
     const fileSizeKB = file.size / 1024;
     if (fileSizeKB > opts.maxSizeKB) {
-        errors.push(`圖片檔案過大：${fileSizeKB.toFixed(1)} KB。建議不超過 ${opts.maxSizeKB} KB。`);
+        errors.push({
+            key: "imageValidation.tooLarge",
+            params: { size: fileSizeKB.toFixed(1), max: opts.maxSizeKB },
+        });
     } else if (fileSizeKB > opts.maxSizeKB * 0.8) {
-        warnings.push(`圖片檔案較大：${fileSizeKB.toFixed(1)} KB。建議壓縮以提升 PDF 生成速度。`);
+        warnings.push({
+            key: "imageValidation.largeWarning",
+            params: { size: fileSizeKB.toFixed(1) },
+        });
     }
 
     return {
@@ -175,7 +191,7 @@ export async function validateAndOptimizeImage(
 
     // 如果有錯誤，不進行優化
     if (!validation.isValid) {
-        throw new Error(`圖片驗證失敗：${validation.errors.join(', ')}`);
+        throw new Error(`Image validation failed: ${validation.errors.map((e) => e.key).join(", ")}`);
     }
 
     // 如果圖片過大或有警告，進行優化

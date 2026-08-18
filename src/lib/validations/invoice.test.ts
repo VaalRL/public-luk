@@ -5,6 +5,19 @@ import {
     createInvoiceSchema,
     recordManualPaymentSchema
 } from './invoice';
+import { messagesByLocale, translate } from '@/lib/i18n/messages';
+
+/**
+ * schema 存的是文案鍵（由 withValidation 在伺服器端翻成當前語言），
+ * 所以除了比對鍵本身，也順便確認這個鍵真的在字典裡查得到 ——
+ * 打錯字的話 translate 會原樣回傳鍵名，這裡就會抓到。
+ */
+function expectMessageKey(message: string, key: string) {
+    expect(message).toBe(key);
+    for (const messages of Object.values(messagesByLocale)) {
+        expect(translate(messages, key), `字典缺少文案鍵 ${key}`).not.toBe(key);
+    }
+}
 
 describe('Invoice Validation Schemas', () => {
     describe('invoiceItemSchema', () => {
@@ -45,7 +58,7 @@ describe('Invoice Validation Schemas', () => {
             const result = invoiceItemSchema.safeParse(invalidItem);
             expect(result.success).toBe(false);
             if (!result.success) {
-                expect(result.error.issues[0].message).toBe('品項名稱不可為空');
+                expectMessageKey(result.error.issues[0].message, 'validation.itemNameRequired');
             }
         });
 
@@ -60,7 +73,7 @@ describe('Invoice Validation Schemas', () => {
             const result = invoiceItemSchema.safeParse(invalidItem);
             expect(result.success).toBe(false);
             if (!result.success) {
-                expect(result.error.issues[0].message).toBe('數量必須大於等於 0');
+                expectMessageKey(result.error.issues[0].message, 'validation.quantityMin');
             }
         });
 
@@ -131,7 +144,7 @@ describe('Invoice Validation Schemas', () => {
             const result = invoiceFormSchema.safeParse(invalidForm);
             expect(result.success).toBe(false);
             if (!result.success) {
-                expect(result.error.issues[0].message).toBe('至少需要一個品項');
+                expectMessageKey(result.error.issues[0].message, 'validation.itemsRequired');
             }
         });
 
@@ -186,7 +199,7 @@ describe('Invoice Validation Schemas', () => {
             const result = createInvoiceSchema.safeParse(invalidData);
             expect(result.success).toBe(false);
             if (!result.success) {
-                expect(result.error.issues[0].message).toBe('無效的公司 ID');
+                expectMessageKey(result.error.issues[0].message, 'validation.invalidCompanyId');
             }
         });
 

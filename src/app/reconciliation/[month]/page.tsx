@@ -4,6 +4,7 @@ import { ReconciliationInterface } from "@/components/reconciliation-interface";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import { getT } from "@/lib/i18n/server";
 import { notFound } from "next/navigation";
 
 export default async function SnapshotPage({
@@ -11,6 +12,7 @@ export default async function SnapshotPage({
 }: {
     params: Promise<{ month: string }>;
 }) {
+    const t = await getT();
     const { month } = await params;
     const [snapshot, allSnapshots] = await Promise.all([
         getReconciliationSnapshot(month),
@@ -50,15 +52,15 @@ export default async function SnapshotPage({
                     <Link href="/dashboard">
                         <Button variant="ghost" size="sm">
                             <ArrowLeft className="w-4 h-4 mr-2" />
-                            返回概覽
+                            {t("monthHistory.back")}
                         </Button>
                     </Link>
                     <div>
                         <h1 className="text-2xl font-bold tracking-tight">
-                            {month} 對帳記錄
+                            {t("monthHistory.title", { month })}
                         </h1>
                         <p className="text-muted-foreground">
-                            檢視歷史銷帳記錄（唯讀模式）
+                            {t("monthHistory.subtitle")}
                         </p>
                     </div>
                 </div>
@@ -72,7 +74,7 @@ export default async function SnapshotPage({
                         ) : (
                             <span>
                                 <ChevronLeft className="w-4 h-4 mr-2" />
-                                上個月
+                                {t("monthHistory.prevMonth")}
                             </span>
                         )}
                     </Button>
@@ -84,7 +86,7 @@ export default async function SnapshotPage({
                             </Link>
                         ) : (
                             <span>
-                                下個月
+                                {t("monthHistory.nextMonth")}
                                 <ChevronRight className="w-4 h-4 ml-2" />
                             </span>
                         )}
@@ -93,7 +95,7 @@ export default async function SnapshotPage({
             </div>
 
             <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 text-amber-800 text-sm">
-                ⚠️ 您正在檢視歷史對帳記錄。在此頁面的操作（如編輯、銷帳）將會更新實際資料庫，並在儲存時覆蓋此對帳記錄。
+                {t("monthHistory.warning")}
             </div>
 
             <ReconciliationInterface

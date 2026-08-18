@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
+import { useT } from "@/lib/i18n/context";
 import { useInvoiceStore } from "@/stores";
 import { createInvoice, updateInvoice, getNextInvoiceNumber } from "@/app/actions/invoice";
 import { invoiceFormSchema, type InvoiceFormData, type InvoiceItem } from "@/lib/validations/invoice";
@@ -24,6 +25,7 @@ export function useInvoiceForm({
     onCancel,
 }: UseInvoiceFormProps) {
     const { toast } = useToast();
+    const t = useT();
     const { addInvoice, updateInvoice: updateInvoiceInStore } = useInvoiceStore();
 
     // Local state
@@ -248,8 +250,8 @@ export function useInvoiceForm({
 
             if (result.success) {
                 toast({
-                    title: initialData ? "更新成功" : "建立成功",
-                    description: "帳單已儲存",
+                    title: initialData ? t("company.updated") : t("company.created"),
+                    description: t("invoicing.form.savedToast"),
                 });
 
                 const savedData = result.data;
@@ -266,7 +268,7 @@ export function useInvoiceForm({
                 }
             } else {
                 toast({
-                    title: "儲存失敗",
+                    title: t("common.saveFailed"),
                     description: result.error,
                     variant: "destructive",
                 });
@@ -274,8 +276,8 @@ export function useInvoiceForm({
         } catch (error) {
             console.error(error);
             toast({
-                title: "錯誤",
-                description: "發生未預期的錯誤",
+                title: t("common.saveFailed"),
+                description: t("invoicing.form.unexpectedError"),
                 variant: "destructive",
             });
         } finally {

@@ -2,6 +2,7 @@
 
 import React from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useT } from "@/lib/i18n/context";
 import { AlertCircle } from "lucide-react";
 import { Transaction } from "./types";
 
@@ -12,6 +13,7 @@ interface AmbiguousTransactionsProps {
 export function AmbiguousTransactions({
     transactions,
 }: AmbiguousTransactionsProps) {
+    const t = useT();
     const ambiguousTx = transactions.filter((tx) => tx.status === "ambiguous");
 
     if (ambiguousTx.length === 0) return null;
@@ -21,7 +23,7 @@ export function AmbiguousTransactions({
             <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-orange-700 dark:text-orange-400">
                     <AlertCircle className="w-5 h-5" />
-                    需要人工審核的交易（共用帳號）
+                    {t("ambiguous.title")}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -48,7 +50,7 @@ export function AmbiguousTransactions({
                 </div>
                 <p className="text-sm text-orange-700 dark:text-orange-400 mt-4">
                     ⚠️
-                    這些交易的帳號被多個公司共用，無法自動判斷歸屬，請人工確認後手動處理。
+                    {t("ambiguous.description")}
                 </p>
             </CardContent>
         </Card>
