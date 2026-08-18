@@ -8,6 +8,8 @@ import { InvoicePdfDocument } from "@/components/invoice-pdf";
 import { pdf } from "@react-pdf/renderer";
 import { PdfPerformanceMonitor } from "@/lib/performance-metrics";
 import { savePdfBackup } from "@/app/actions/pdf-backup";
+import { getPdfTemplate } from "@/app/actions/pdf-template";
+import { defaultPdfTemplate, type PdfTemplate } from "@/lib/pdf-template";
 import type { PdfInvoice, InvoiceItem } from "@/types/invoice-pdf";
 import {
     Tooltip,
@@ -101,13 +103,24 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
             setIsGenerating(true);
             setShowConfirmDialog(false);
 
+            // 版型設定每次產生前重新讀取。設定頁改完版型後如果這裡沿用舊值，
+            // 使用者會以為設定沒生效 —— 本機 SQLite 讀一列的成本遠低於這個誤會。
+            let template: PdfTemplate = defaultPdfTemplate;
+            try {
+                template = await getPdfTemplate();
+            } catch (templateError) {
+                console.error("讀取 PDF 版型設定失敗，改用預設版型:", templateError);
+            }
+
             // Generate a cache key based on invoice content
             // We use ID and updatedAt to invalidate cache if invoice changes
+            // 版型也算進 key：同一張帳單換了版型必須重新產生
             const currentKey = JSON.stringify({
                 id: invoice.id,
                 updatedAt: invoice.updatedAt,
                 invoiceNumber: invoice.invoiceNumber ?? undefined,
-                amount: invoice.totalAmount
+                amount: invoice.totalAmount,
+                template,
             });
 
             let blob: Blob;
@@ -122,7 +135,7 @@ export function InvoiceDownloadButton({ invoice, fileName }: InvoiceDownloadButt
                 monitor.start();
 
                 // Generate the blob
-                blob = await pdf(<InvoicePdfDocument invoice={invoice} />).toBlob();
+                blob = await pdf(<InvoicePdfDocument invoice={invoice} template={template} />).toBlob();
 
                 // Update cache
                 setCachedBlob(blob);

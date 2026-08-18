@@ -1,7 +1,7 @@
 "use client";
 
 import { TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Building2, FileCode2, DatabaseBackup, FileText, Info, AlertTriangle, MessageSquare, Activity, Shield } from "lucide-react";
+import { Building2, FileCode2, DatabaseBackup, FileText, FileSignature, Info, AlertTriangle, MessageSquare, Activity, Shield } from "lucide-react";
 import { useSettingsReminder } from "@/hooks/use-settings-reminder";
 import { NotificationDot } from "@/components/ui/notification-dot";
 import { useHiddenMode } from "@/store/use-hidden-mode";
@@ -36,6 +36,13 @@ export function SettingsTabsList() {
                     <FileText className="w-4 h-4 mr-2" />
                     帳單項目管理
                     <NotificationDot show={showInvoiceItemReminder} size="sm" position="inline" />
+                </TabsTrigger>
+                <TabsTrigger
+                    value="pdf-template"
+                    className="justify-start px-4 py-2 data-[state=active]:bg-secondary data-[state=active]:text-foreground"
+                >
+                    <FileSignature className="w-4 h-4 mr-2" />
+                    報價單版型
                 </TabsTrigger>
                 <TabsTrigger
                     value="notifications"

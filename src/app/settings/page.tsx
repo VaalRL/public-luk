@@ -2,11 +2,13 @@ import { getCompanies } from "@/app/actions/company";
 import { getParserTemplates } from "@/app/actions/parser";
 import { getInvoiceItemTemplates } from "@/app/actions/invoice-item-template";
 import { getNotificationTemplates } from "@/app/actions/notification-templates";
+import { getPdfTemplate } from "@/app/actions/pdf-template";
 import { CompanyManagement } from "@/components/company-management";
 import { ParserManagement } from "@/components/parser-management";
 import { DataBackup } from "@/components/data-backup";
 import { InvoiceItemTemplateManagement } from "@/components/invoice-item-template-management";
 import { NotificationTemplatesSettings } from "@/components/notification-templates-settings";
+import { PdfTemplateSettings } from "@/components/pdf-template-settings";
 import { AboutSection } from "@/components/about-section";
 import { DangerZone } from "@/components/danger-zone";
 import { SystemMonitor } from "@/components/system-monitor";
@@ -22,6 +24,7 @@ export default async function SettingsPage() {
     const parserTemplates = await getParserTemplates();
     const invoiceItemTemplates = await getInvoiceItemTemplates();
     const notificationTemplates = await getNotificationTemplates();
+    const pdfTemplate = await getPdfTemplate();
 
     return (
         <div className="space-y-6">
@@ -47,6 +50,9 @@ export default async function SettingsPage() {
                     </TabsContent>
                     <TabsContent value="notifications" className="mt-0">
                         <NotificationTemplatesSettings templates={notificationTemplates} />
+                    </TabsContent>
+                    <TabsContent value="pdf-template" className="mt-0">
+                        <PdfTemplateSettings initialTemplate={pdfTemplate} />
                     </TabsContent>
                     <TabsContent value="monitoring" className="mt-0">
                         <SystemMonitor />

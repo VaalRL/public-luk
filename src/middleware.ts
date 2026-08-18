@@ -93,12 +93,16 @@ export async function middleware(request: NextRequest) {
     const response = NextResponse.next();
     const headers = response.headers;
 
+    // frame-src 需要 blob:：設定頁的版型預覽把當場產生的 PDF 直接嵌在頁面上。
+    // default-src 沒有涵蓋這個情境（會退回 'self'，blob: 一律被擋），
+    // 而這裡放行的只有頁面自己產生的資料，不會多開任何外部連線。
     const csp = `
         default-src 'self';
         script-src 'self' 'unsafe-inline' 'unsafe-eval';
         style-src 'self' 'unsafe-inline';
         img-src 'self' blob: data:;
         font-src 'self';
+        frame-src 'self' blob:;
         object-src 'none';
         base-uri 'self';
         form-action 'self';

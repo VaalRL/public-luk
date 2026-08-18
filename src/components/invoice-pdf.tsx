@@ -1,175 +1,197 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Image } from '@react-pdf/renderer';
-import { format } from 'date-fns';
-import { registerPdfFonts } from '@/lib/pdf-fonts';
+import { registerPdfFonts, PDF_FONT_FAMILY } from '@/lib/pdf-fonts';
 import type { PdfInvoice, PdfBankAccount, PdfCompany } from "@/types/invoice-pdf";
 import { defaultProvider } from "@/lib/default-provider";
 import { derivedTaxRate } from "@/lib/invoice-total";
+import {
+    defaultPdfTemplate,
+    applyTaxRate,
+    formatMoney,
+    formatPdfDate,
+    type PdfTemplate,
+    type PdfLayout,
+} from "@/lib/pdf-template";
 
 // Register fonts once
 registerPdfFonts();
 
-const styles = StyleSheet.create({
-    page: {
-        fontFamily: 'Noto Sans TC',
-        padding: 30,
-        fontSize: 10,
-    },
-    header: {
-        flexDirection: 'column',
-        alignItems: 'center',
-        marginBottom: 20,
-    },
-    logoContainer: {
-        width: 120,
-        height: 80,
-        marginBottom: 10,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    logo: {
-        maxWidth: '100%',
-        maxHeight: '100%',
-        objectFit: 'contain',
-    },
-    title: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        textAlign: 'center',
-        marginBottom: 10,
-    },
-    infoSection: {
-        flexDirection: 'row',
-        marginBottom: 20,
-    },
-    column: {
-        flex: 1,
-    },
-    label: {
-        width: 60,
-        fontWeight: 'bold',
-    },
-    row: {
-        flexDirection: 'row',
-        marginBottom: 4,
-    },
-    table: {
-        width: '100%',
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: '#000',
-        marginBottom: 20,
-    },
-    tableRow: {
-        flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderBottomColor: '#000',
-        alignItems: 'center',
-        minHeight: 24,
-    },
-    tableHeader: {
-        backgroundColor: '#f0f0f0',
-        fontWeight: 'bold',
-    },
-    tableCell: {
-        padding: 4,
-        borderRightWidth: 1,
-        borderRightColor: '#000',
-        textAlign: 'center',
-    },
-    lastCell: {
-        borderRightWidth: 0,
-    },
-    // Column widths
-    colCategory: { width: '15%' },
-    colName: { width: '15%' },
-    colContent: { width: '25%' }, // Increased width since description is removed
-    colQty: { width: '8%' },
-    colPrice: { width: '12%' },
-    colTotal: { width: '15%' },
-    colNote: { width: '10%' }, // Adjusted to fit 100%
+/**
+ * 版面樣式依設定產生。
+ *
+ * 這裡的每個數字先前都寫死在模組層的 StyleSheet.create 裡，換頁面大小、
+ * 換欄寬、換印章位置都得改程式。改成由 PdfLayout 決定後，
+ * 設定頁就能直接調整；沒有設定過的人拿到的仍是原本的版面。
+ */
+function createStyles(layout: PdfLayout) {
+    const { columnWidths: col } = layout;
+    return StyleSheet.create({
+        page: {
+            fontFamily: PDF_FONT_FAMILY,
+            padding: layout.pagePadding,
+            fontSize: layout.baseFontSize,
+        },
+        header: {
+            flexDirection: 'column',
+            alignItems: 'center',
+            marginBottom: 20,
+        },
+        logoContainer: {
+            width: layout.logoWidth,
+            height: layout.logoHeight,
+            marginBottom: 10,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        logo: {
+            maxWidth: '100%',
+            maxHeight: '100%',
+            objectFit: 'contain',
+        },
+        title: {
+            fontSize: layout.titleFontSize,
+            fontWeight: 'bold',
+            textAlign: 'center',
+            marginBottom: 10,
+        },
+        infoSection: {
+            flexDirection: 'row',
+            marginBottom: 20,
+        },
+        column: {
+            flex: 1,
+        },
+        label: {
+            width: 60,
+            fontWeight: 'bold',
+        },
+        row: {
+            flexDirection: 'row',
+            marginBottom: 4,
+        },
+        table: {
+            width: '100%',
+            borderStyle: 'solid',
+            borderWidth: 1,
+            borderColor: '#000',
+            marginBottom: 20,
+        },
+        tableRow: {
+            flexDirection: 'row',
+            borderBottomWidth: 1,
+            borderBottomColor: '#000',
+            alignItems: 'center',
+            minHeight: 24,
+        },
+        tableHeader: {
+            backgroundColor: '#f0f0f0',
+            fontWeight: 'bold',
+        },
+        tableCell: {
+            padding: 4,
+            borderRightWidth: 1,
+            borderRightColor: '#000',
+            textAlign: 'center',
+        },
+        lastCell: {
+            borderRightWidth: 0,
+        },
+        // Column widths
+        colCategory: { width: `${col.category}%` },
+        colName: { width: `${col.name}%` },
+        colContent: { width: `${col.content}%` },
+        colQty: { width: `${col.quantity}%` },
+        colPrice: { width: `${col.price}%` },
+        colTotal: { width: `${col.total}%` },
+        colNote: { width: `${col.note}%` },
 
-    totals: {
-        alignSelf: 'flex-end',
-        width: '40%',
-        marginTop: 10,
-    },
-    totalRow: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        marginBottom: 4,
-    },
-    footer: {
-        marginTop: 30,
-        borderTopWidth: 1,
-        borderTopColor: '#ccc',
-        paddingTop: 10,
-    },
-    bankInfo: {
-        marginTop: 10,
-        fontSize: 9,
-        lineHeight: 1.5,
-    },
-    stampContainer: {
-        position: 'absolute',
-        right: 40,
-        bottom: 40,
-        width: 80,
-        height: 80,
-    },
-    stamp: {
-        width: '100%',
-        height: '100%',
-        objectFit: 'contain',
-    },
-    bankTable: {
-        width: '100%',
-        borderStyle: 'solid',
-        borderWidth: 1,
-        borderColor: '#000',
-        marginTop: 20,
-        marginBottom: 20,
-    },
-    bankTableRow: {
-        flexDirection: 'row',
-        borderBottomWidth: 1,
-        borderBottomColor: '#000',
-        minHeight: 24,
-    },
-    bankTableHeader: {
-        backgroundColor: '#f0f0f0',
-        fontWeight: 'bold',
-    },
-    bankTableCell: {
-        padding: 4,
-        borderRightWidth: 1,
-        borderRightColor: '#000',
-        textAlign: 'center',
-        fontSize: 9,
-    },
-    signatureSection: {
-        flexDirection: 'row',
-        marginTop: 30,
-        marginBottom: 20,
-        justifyContent: 'space-between',
-    },
-    signatureBox: {
-        width: '45%',
-        borderWidth: 1,
-        borderColor: '#000',
-        padding: 10,
-        minHeight: 100,
-    },
-    signatureTitle: {
-        fontWeight: 'bold',
-        marginBottom: 8,
-        fontSize: 11,
-    },
-    signatureText: {
-        fontSize: 9,
-        marginBottom: 3,
-    },
-});
+        totals: {
+            alignSelf: 'flex-end',
+            width: '40%',
+            marginTop: 10,
+        },
+        totalRow: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            marginBottom: 4,
+        },
+        footer: {
+            marginTop: 30,
+            borderTopWidth: 1,
+            borderTopColor: '#ccc',
+            paddingTop: 10,
+        },
+        footerNote: {
+            marginTop: 20,
+            fontSize: Math.max(6, layout.baseFontSize - 1),
+            lineHeight: 1.5,
+        },
+        bankInfo: {
+            marginTop: 10,
+            fontSize: 9,
+            lineHeight: 1.5,
+        },
+        stampContainer: {
+            position: 'absolute',
+            right: layout.stampRight,
+            bottom: layout.stampBottom,
+            width: layout.stampWidth,
+            height: layout.stampHeight,
+        },
+        stamp: {
+            width: '100%',
+            height: '100%',
+            objectFit: 'contain',
+        },
+        bankTable: {
+            width: '100%',
+            borderStyle: 'solid',
+            borderWidth: 1,
+            borderColor: '#000',
+            marginTop: 20,
+            marginBottom: 20,
+        },
+        bankTableRow: {
+            flexDirection: 'row',
+            borderBottomWidth: 1,
+            borderBottomColor: '#000',
+            minHeight: 24,
+        },
+        bankTableHeader: {
+            backgroundColor: '#f0f0f0',
+            fontWeight: 'bold',
+        },
+        bankTableCell: {
+            padding: 4,
+            borderRightWidth: 1,
+            borderRightColor: '#000',
+            textAlign: 'center',
+            fontSize: 9,
+        },
+        signatureSection: {
+            flexDirection: 'row',
+            marginTop: 30,
+            marginBottom: 20,
+            justifyContent: 'space-between',
+        },
+        signatureBox: {
+            width: '45%',
+            borderWidth: 1,
+            borderColor: '#000',
+            padding: 10,
+            minHeight: 100,
+        },
+        signatureTitle: {
+            fontWeight: 'bold',
+            marginBottom: 8,
+            fontSize: 11,
+        },
+        signatureText: {
+            fontSize: 9,
+            marginBottom: 3,
+        },
+    });
+}
 
 interface InvoiceItem {
     type?: string;
@@ -185,9 +207,15 @@ interface InvoiceItem {
 
 interface InvoicePdfProps {
     invoice: PdfInvoice;
+    /** 版型設定；未指定時使用預設版型 */
+    template?: PdfTemplate;
 }
 
-export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
+export const InvoicePdfDocument = React.memo(({ invoice, template = defaultPdfTemplate }: InvoicePdfProps) => {
+    const { labels, layout, options } = template;
+    const styles = React.useMemo(() => createStyles(layout), [layout]);
+    const money = React.useCallback((n: number) => formatMoney(n, options), [options]);
+
     const {
         serviceItems,
         reimbursementItems,
@@ -238,6 +266,8 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
         };
     }, [invoice]);
 
+    const empty = labels.emptyValue;
+
     const renderTable = (tableItems: InvoiceItem[], title: string, defaultCategory: string) => {
         if (tableItems.length === 0) return null;
         return (
@@ -245,12 +275,12 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                 {/* Header */}
                 <View style={[styles.tableRow, styles.tableHeader]}>
                     <Text style={[styles.tableCell, styles.colCategory]}>{title}</Text>
-                    <Text style={[styles.tableCell, styles.colName]}>項目名稱</Text>
-                    <Text style={[styles.tableCell, styles.colContent]}>內容</Text>
-                    <Text style={[styles.tableCell, styles.colQty]}>數量</Text>
-                    <Text style={[styles.tableCell, styles.colPrice]}>單價</Text>
-                    <Text style={[styles.tableCell, styles.colTotal]}>總價</Text>
-                    <Text style={[styles.tableCell, styles.colNote, styles.lastCell]}>備註</Text>
+                    <Text style={[styles.tableCell, styles.colName]}>{labels.itemName}</Text>
+                    <Text style={[styles.tableCell, styles.colContent]}>{labels.itemContent}</Text>
+                    <Text style={[styles.tableCell, styles.colQty]}>{labels.quantity}</Text>
+                    <Text style={[styles.tableCell, styles.colPrice]}>{labels.unitPrice}</Text>
+                    <Text style={[styles.tableCell, styles.colTotal]}>{labels.lineTotal}</Text>
+                    <Text style={[styles.tableCell, styles.colNote, styles.lastCell]}>{labels.itemNote}</Text>
                 </View>
 
                 {/* Rows */}
@@ -260,8 +290,8 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                         <Text style={[styles.tableCell, styles.colName]}>{item.name}</Text>
                         <Text style={[styles.tableCell, styles.colContent]}>{item.content || item.description || ""}</Text>
                         <Text style={[styles.tableCell, styles.colQty]}>{item.quantity}</Text>
-                        <Text style={[styles.tableCell, styles.colPrice]}>${item.price.toLocaleString()}</Text>
-                        <Text style={[styles.tableCell, styles.colTotal]}>${item.amount.toLocaleString()}</Text>
+                        <Text style={[styles.tableCell, styles.colPrice]}>{money(item.price)}</Text>
+                        <Text style={[styles.tableCell, styles.colTotal]}>{money(item.amount)}</Text>
                         <Text style={[styles.tableCell, styles.colNote, styles.lastCell]}>{item.note || ""}</Text>
                     </View>
                 ))}
@@ -271,26 +301,26 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
 
     return (
         <Document>
-            <Page size="A4" style={styles.page}>
+            <Page size={layout.pageSize} style={styles.page}>
                 {/* Logo and Title - Centered */}
                 <View style={styles.header}>
-                    {provider.logoPath && (
+                    {options.showLogo && provider.logoPath && (
                         <View style={styles.logoContainer}>
                             {/* eslint-disable-next-line jsx-a11y/alt-text -- 這是 @react-pdf/renderer 的 Image（PDF 元件），並非 HTML img，沒有 alt 屬性 */}
                             <Image src={provider.logoPath} style={styles.logo} />
                         </View>
                     )}
-                    <Text style={styles.title}>{invoice.title || "報價單"}</Text>
+                    <Text style={styles.title}>{invoice.title || labels.documentTitle}</Text>
                 </View>
 
                 {/* Header Info - Centered */}
                 <View style={{ marginBottom: 20, alignItems: 'center' }}>
                     <View style={{ flexDirection: 'row', marginBottom: 4 }}>
-                        <Text style={{ fontWeight: 'bold' }}>日期：</Text>
-                        <Text>{format(new Date(invoice.date), 'yyyy/MM/dd')}</Text>
+                        <Text style={{ fontWeight: 'bold' }}>{labels.date}</Text>
+                        <Text>{formatPdfDate(invoice.date, options)}</Text>
                     </View>
                     <View style={{ flexDirection: 'row' }}>
-                        <Text style={{ fontWeight: 'bold' }}>單號：</Text>
+                        <Text style={{ fontWeight: 'bold' }}>{labels.invoiceNumber}</Text>
                         <Text>{invoice.invoiceNumber || 'N/A'}</Text>
                     </View>
                 </View>
@@ -299,91 +329,91 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                 <View style={styles.infoSection}>
                     {/* Client (Party A) */}
                     <View style={styles.column}>
-                        <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>甲方</Text>
+                        <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{labels.clientBlock}</Text>
                         <View style={styles.row}>
-                            <Text style={styles.label}>公司名稱：</Text>
+                            <Text style={styles.label}>{labels.companyName}</Text>
                             <Text>{company.name}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>統一編號：</Text>
-                            <Text>{company.taxId || '-'}</Text>
+                            <Text style={styles.label}>{labels.taxId}</Text>
+                            <Text>{company.taxId || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>聯絡人：</Text>
-                            <Text>{company.contactName || '-'}</Text>
+                            <Text style={styles.label}>{labels.contactName}</Text>
+                            <Text>{company.contactName || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>電話：</Text>
-                            <Text>{company.phone || '-'}</Text>
+                            <Text style={styles.label}>{labels.phone}</Text>
+                            <Text>{company.phone || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>地址：</Text>
-                            <Text>{company.address || '-'}</Text>
+                            <Text style={styles.label}>{labels.address}</Text>
+                            <Text>{company.address || empty}</Text>
                         </View>
                     </View>
 
                     {/* Provider (Party B) */}
                     <View style={styles.column}>
-                        <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>乙方</Text>
+                        <Text style={{ fontWeight: 'bold', marginBottom: 5 }}>{labels.providerBlock}</Text>
                         <View style={styles.row}>
-                            <Text style={styles.label}>公司名稱：</Text>
+                            <Text style={styles.label}>{labels.companyName}</Text>
                             <Text>{provider.name}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>統一編號：</Text>
-                            <Text>{provider.taxId || '-'}</Text>
+                            <Text style={styles.label}>{labels.taxId}</Text>
+                            <Text>{provider.taxId || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>聯絡人：</Text>
-                            <Text>{provider.contactName || '-'}</Text>
+                            <Text style={styles.label}>{labels.contactName}</Text>
+                            <Text>{provider.contactName || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>電話：</Text>
-                            <Text>{provider.phone || '-'}</Text>
+                            <Text style={styles.label}>{labels.phone}</Text>
+                            <Text>{provider.phone || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>Email：</Text>
-                            <Text>{provider.email || '-'}</Text>
+                            <Text style={styles.label}>{labels.email}</Text>
+                            <Text>{provider.email || empty}</Text>
                         </View>
                         <View style={styles.row}>
-                            <Text style={styles.label}>地址：</Text>
-                            <Text>{provider.address || '-'}</Text>
+                            <Text style={styles.label}>{labels.address}</Text>
+                            <Text>{provider.address || empty}</Text>
                         </View>
                     </View>
                 </View>
 
                 {/* Service Items Table */}
-                {renderTable(serviceItems, "服務項目", "服務項目")}
+                {renderTable(serviceItems, labels.serviceSection, labels.serviceSection)}
 
                 {/* Service Totals */}
                 {serviceItems.length > 0 && (
                     <View style={styles.totals}>
                         <View style={styles.totalRow}>
-                            <Text>銷售金額 (未稅)：</Text>
-                            <Text>${serviceSubtotal.toLocaleString()}</Text>
+                            <Text>{labels.subtotal}</Text>
+                            <Text>{money(serviceSubtotal)}</Text>
                         </View>
-                        <View style={styles.totalRow}>
-                            <Text>營業稅 ({taxRate}%)：</Text>
-                            <Text>${serviceTax.toLocaleString()}</Text>
-                        </View>
+                        {options.showTaxRow && (
+                            <View style={styles.totalRow}>
+                                <Text>{applyTaxRate(labels.tax, taxRate)}</Text>
+                                <Text>{money(serviceTax)}</Text>
+                            </View>
+                        )}
                         <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#000', paddingTop: 4 }]}>
-                            <Text style={{ fontWeight: 'bold' }}>服務總計 (含稅)：</Text>
-                            <Text style={{ fontWeight: 'bold' }}>
-                                ${serviceTotal.toLocaleString()}
-                            </Text>
+                            <Text style={{ fontWeight: 'bold' }}>{labels.serviceTotal}</Text>
+                            <Text style={{ fontWeight: 'bold' }}>{money(serviceTotal)}</Text>
                         </View>
                     </View>
                 )}
 
                 {/* Reimbursement Items Table */}
-                {renderTable(reimbursementItems, "代墊費用", "代墊費用")}
+                {renderTable(reimbursementItems, labels.reimbursementSection, labels.reimbursementSection)}
 
                 {/* Reimbursement Totals */}
                 {reimbursementItems.length > 0 && (
                     <View style={styles.totals}>
                         <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#000', paddingTop: 4 }]}>
-                            <Text style={{ fontWeight: 'bold' }}>代墊小計：</Text>
-                            <Text style={{ fontWeight: 'bold' }}>${reimbursementTotal.toLocaleString()}</Text>
+                            <Text style={{ fontWeight: 'bold' }}>{labels.reimbursementTotal}</Text>
+                            <Text style={{ fontWeight: 'bold' }}>{money(reimbursementTotal)}</Text>
                         </View>
                     </View>
                 )}
@@ -391,33 +421,33 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                 {/* Grand Total */}
                 <View style={[styles.totals, { marginTop: 20 }]}>
                     <View style={[styles.totalRow, { borderTopWidth: 2, borderTopColor: '#000', paddingTop: 4 }]}>
-                        <Text style={{ fontWeight: 'bold', fontSize: 12 }}>總計金額：</Text>
-                        <Text style={{ fontWeight: 'bold', fontSize: 12 }}>
-                            ${grandTotal.toLocaleString()}
+                        <Text style={{ fontWeight: 'bold', fontSize: layout.baseFontSize + 2 }}>{labels.grandTotal}</Text>
+                        <Text style={{ fontWeight: 'bold', fontSize: layout.baseFontSize + 2 }}>
+                            {money(grandTotal)}
                         </Text>
                     </View>
                 </View>
 
                 {/* Bank Account Information Table */}
-                {provider.bankAccounts && provider.bankAccounts.length > 0 && (
+                {options.showBankAccounts && provider.bankAccounts && provider.bankAccounts.length > 0 && (
                     <View>
-                        <Text style={{ fontWeight: 'bold', marginTop: 20, marginBottom: 5 }}>收款資訊</Text>
+                        <Text style={{ fontWeight: 'bold', marginTop: 20, marginBottom: 5 }}>{labels.bankSection}</Text>
                         <View style={styles.bankTable}>
                             {/* Header */}
                             <View style={[styles.bankTableRow, styles.bankTableHeader]}>
-                                <Text style={[styles.bankTableCell, { width: '15%' }]}>幣別</Text>
-                                <Text style={[styles.bankTableCell, { width: '25%' }]}>銀行</Text>
-                                <Text style={[styles.bankTableCell, { width: '20%' }]}>分行</Text>
-                                <Text style={[styles.bankTableCell, { width: '25%' }]}>帳號</Text>
-                                <Text style={[styles.bankTableCell, { width: '15%', borderRightWidth: 0 }]}>戶名</Text>
+                                <Text style={[styles.bankTableCell, { width: '15%' }]}>{labels.bankCurrency}</Text>
+                                <Text style={[styles.bankTableCell, { width: '25%' }]}>{labels.bankName}</Text>
+                                <Text style={[styles.bankTableCell, { width: '20%' }]}>{labels.bankBranch}</Text>
+                                <Text style={[styles.bankTableCell, { width: '25%' }]}>{labels.bankAccountNumber}</Text>
+                                <Text style={[styles.bankTableCell, { width: '15%', borderRightWidth: 0 }]}>{labels.bankAccountHolder}</Text>
                             </View>
                             {/* Rows */}
                             {(provider.bankAccounts ?? []).map((account: PdfBankAccount, index: number) => (
                                 <View key={index} style={[styles.bankTableRow, index === (provider.bankAccounts ?? []).length - 1 ? { borderBottomWidth: 0 } : {}]}>
                                     <Text style={[styles.bankTableCell, { width: '15%' }]}>{account.currency || 'TWD'}</Text>
-                                    <Text style={[styles.bankTableCell, { width: '25%' }]}>{account.note || '-'}</Text>
-                                    <Text style={[styles.bankTableCell, { width: '20%' }]}>{account.branch || '-'}</Text>
-                                    <Text style={[styles.bankTableCell, { width: '25%' }]}>{account.accountNumber || '-'}</Text>
+                                    <Text style={[styles.bankTableCell, { width: '25%' }]}>{account.note || empty}</Text>
+                                    <Text style={[styles.bankTableCell, { width: '20%' }]}>{account.branch || empty}</Text>
+                                    <Text style={[styles.bankTableCell, { width: '25%' }]}>{account.accountNumber || empty}</Text>
                                     <Text style={[styles.bankTableCell, { width: '15%', borderRightWidth: 0 }]}>{account.accountHolder || provider.name}</Text>
                                 </View>
                             ))}
@@ -425,8 +455,31 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                     </View>
                 )}
 
+                {/* 簽章欄：樣式本來就在，改為由設定決定要不要印 */}
+                {options.showSignatures && (
+                    <View style={styles.signatureSection}>
+                        <View style={styles.signatureBox}>
+                            <Text style={styles.signatureTitle}>{labels.signatureClient}</Text>
+                            <Text style={styles.signatureText}>{company.name}</Text>
+                            <Text style={styles.signatureText}>{company.taxId || empty}</Text>
+                        </View>
+                        <View style={styles.signatureBox}>
+                            <Text style={styles.signatureTitle}>{labels.signatureProvider}</Text>
+                            <Text style={styles.signatureText}>{provider.name}</Text>
+                            <Text style={styles.signatureText}>{provider.taxId || empty}</Text>
+                        </View>
+                    </View>
+                )}
+
+                {/* 附註／條款 */}
+                {options.footerNote !== "" && (
+                    <View style={styles.footerNote}>
+                        <Text>{options.footerNote}</Text>
+                    </View>
+                )}
+
                 {/* 用印：stampContainer / stamp 樣式本來就寫好了，只是從來沒有畫出來 */}
-                {provider.stampPath && (
+                {options.showStamp && provider.stampPath && (
                     <View style={styles.stampContainer}>
                         {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer 的 Image 沒有 alt 屬性 */}
                         <Image src={provider.stampPath} style={styles.stamp} />
