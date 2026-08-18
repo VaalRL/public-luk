@@ -1,0 +1,348 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luk — Bank Reconciliation for Small Companies</title>
+<meta name="description" content="Reads your bank statement, identifies the customer from the last five digits of the transfer account, and settles open invoices automatically. Open-source reconciliation for small companies.">
+<meta property="og:title" content="Luk — Bank Reconciliation for Small Companies">
+<meta property="og:description" content="Match incoming payments to open invoices, automatically. Open source, runs locally, MIT licensed.">
+<meta property="og:type" content="website">
+<link rel="icon" href="img/logo.png">
+<link rel="alternate" hreflang="zh-Hant" href="./index.html">
+<link rel="alternate" hreflang="en" href="./en.html">
+<link rel="alternate" hreflang="x-default" href="./index.html">
+<script>
+  // 在首次繪製前套用偏好，避免主題閃爍。
+  // 值為 "light" / "dark" 時寫入 data-theme；沒有值代表跟隨系統。
+  try{
+    var t=localStorage.getItem("luk-theme");
+    if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t);
+  }catch(e){}
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mark">Luk</span><span class="ver">reconciliation</span></a>
+    <nav>
+      <a class="nav-hide" href="#how">How it works</a>
+      <a class="nav-hide" href="#principle">Principle</a>
+      <a class="nav-hide" href="#screens">Screens</a>
+      <a class="nav-hide" href="#limits">Before you start</a>
+      <a class="repo" href="https://github.com/VaalRL/public-luk">GitHub ↗</a>
+      <a class="lang" href="index.html" hreflang="zh-Hant" lang="zh-Hant">中文</a>
+      <div class="theme" role="group" aria-label="Color theme">
+        <button type="button" data-set="system">Auto</button>
+        <button type="button" data-set="light">Light</button>
+        <button type="button" data-set="dark">Dark</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">Open source · Runs locally · MIT</p>
+        <h1>Incoming payments,<br>matched to invoices.</h1>
+        <p class="lead">
+          Luk reads your bank statement, identifies the customer from the last five digits of the
+          transfer account, and settles open invoices oldest-first. An afternoon of comparing two
+          windows line by line becomes one button.
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/VaalRL/public-luk">View on GitHub</a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
+        </div>
+      </div>
+
+      <!-- 這張帳頁就是產品本身的邏輯 -->
+      <div class="ledger" role="img"
+           aria-label="Example: a payment of 95,550 received on August 14, its memo containing the last five digits 12345, matched to Qingguang Technology's open invoice DEMO20260804#01 for the same amount, settled automatically.">
+        <div class="ledger-head">
+          <p class="eyebrow">Auto-settled</p>
+          <p class="eyebrow">2026 / 08</p>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">Bank statement</p>
+          <div class="row">
+            <span class="date">08/14</span>
+            <span class="what">
+              <span class="name">Transfer in</span>
+              <span class="memo">ATM DEPOSIT <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">Open invoice</p>
+          <div class="row">
+            <span class="date">08/04</span>
+            <span class="what">
+              <span class="name">Qingguang Technology Co., Ltd.</span>
+              <span class="memo">DEMO20260804#01 · last 5 <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="match">
+          <span class="verdict">Settled</span>
+          <span class="bar" aria-hidden="true"></span>
+          <span class="tag tag-settled">Paid</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Why this exists</p>
+        <h2>Small-company reconciliation gets stuck in the same place</h2>
+        <p class="lead">Payments arrive through virtual account numbers, and the bank statement keeps only the last five digits. Your customer will not tell you which invoice the money was for.</p>
+      </div>
+      <dl class="pains">
+        <div class="pain">
+          <dt>Five digits are all you get</dt>
+          <dd>The memo reads “ATM DEPOSIT 12345”. You have to look up which company owns that number before you know who paid.</dd>
+        </div>
+        <div class="pain">
+          <dt>One payment, several invoices</dt>
+          <dd>Customers often send one round figure. You split it across open invoices yourself — and remember whatever is left over.</dd>
+        </div>
+        <div class="pain">
+          <dt>Mismatched amounts mean digging</dt>
+          <dd>Overpayments have to carry to next month; shortfalls have to be chased. That state lives in a spreadsheet and in someone's head, and it breaks the moment they hand over.</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">How it works</p>
+        <h2>Three steps, from statement to settled</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>Upload the bank statement</h3>
+          <p>Drop in the Excel file your bank exports. The first time, you map which column holds the date, the amount and the memo; save it as a template and reuse it after that.</p>
+        </div>
+        <div class="step">
+          <h3>Attribute and settle automatically</h3>
+          <p>The last five digits are pulled from the memo to identify the customer, then open invoices are settled oldest-first. Anything overpaid becomes credit for that customer and is applied automatically next period.</p>
+        </div>
+        <div class="step">
+          <h3>Close the month without deleting anything</h3>
+          <p>Closing a month marks its transactions as closed — it deletes no records. When someone later asks how a payment was attributed, the trail is still there.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="principle">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Principle</p>
+        <h2>How money gets allocated across invoices</h2>
+        <p class="lead">
+          The numbers in the two examples below come from running those scenarios through the actual
+          matching engine. They are not illustrations.
+        </p>
+      </div>
+
+      <div class="cases">
+
+        <div class="case">
+          <div class="case-intro">
+            <b>One payment across several invoices</b>
+            <span>Company A sends 200,000 and has three open invoices. Luk settles them by invoice date, oldest first.</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="alloc">
+              <caption>06/20 · received 200,000 · memo ATM DEPOSIT 11111</caption>
+              <thead>
+                <tr><th>Invoice</th><th>Date</th><th class="n">Due</th><th class="n">Applied</th><th>Result</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>A-001</td><td class="n">05/02</td><td class="n">84,000</td><td class="n give">84,000</td><td><span class="state ok">Paid</span></td></tr>
+                <tr><td>A-002</td><td class="n">05/18</td><td class="n">63,000</td><td class="n give">63,000</td><td><span class="state ok">Paid</span></td></tr>
+                <tr><td>A-003</td><td class="n">06/04</td><td class="n">91,000</td><td class="n give">53,000</td><td><span class="state part">Partial</span></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3">Allocated</td><td class="n">200,000</td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="verdict-note">
+            <span><b>Oldest gets paid first.</b> The 200,000 runs out exactly; the newest invoice A-003 is only
+            partly covered and the remaining 38,000 stays open. If a payment exceeds everything outstanding,
+            the excess is not forced onto an invoice — it becomes credit for that company and is applied next period.</span>
+          </p>
+        </div>
+
+        <div class="case">
+          <div class="case-intro">
+            <b>When the payer cannot be identified</b>
+            <span>Company B and Company C both registered the same last five digits, 22222, and each has one open invoice for 50,000. Five digits are no longer enough to decide.</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="alloc">
+              <caption>06/21 · received 50,000 · memo ATM DEPOSIT 22222</caption>
+              <thead>
+                <tr><th>Candidate</th><th>Invoice</th><th class="n">Due</th><th class="n">Applied</th><th>Result</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Company B</td><td>B-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">Untouched</span></td></tr>
+                <tr><td>Company C</td><td>C-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">Untouched</span></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3">Allocated</td><td class="n">0</td><td><span class="state hold">Needs review</span></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="verdict-note warn">
+            <span><b>When unsure, it does not guess.</b> The payment is flagged for review, neither company's
+            ledger moves, and the decision is left to you. A pending task is cheaper than a wrong one —
+            once a payment is booked against the wrong company, undoing it costs far more than a second look.</span>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Screens</p>
+        <h2>See the ledger, and what is still missing</h2>
+        <p class="lead">The screens below use fictional demo data. The interface itself is in Traditional Chinese.</p>
+      </div>
+      <div class="shots">
+        <figure>
+          <img src="img/reconciliation.png" width="2400" height="1300" loading="lazy"
+               alt="Reconciliation screen: three incoming bank transactions with their last five digits at the top, open invoices and unpaid amounts below, and an auto-match button in the upper right.">
+          <figcaption>
+            <b>Reconciliation</b>
+            <span>Money in from the bank on one side, invoices still unpaid on the other. Press auto-match and the two sides line themselves up; whatever cannot be identified is left for you rather than guessed.</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/dashboard.png" width="2400" height="1350" loading="lazy"
+               alt="Dashboard: KPI cards for receivables and collections this month and outstanding balances, a six-month revenue bar chart, and a to-do list.">
+          <figcaption>
+            <b>Dashboard</b>
+            <span>Billed and collected this month, what is still outstanding, and the six-month trend. Reminders sit right next to them.</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/invoicing.png" width="2400" height="1250" loading="lazy"
+               alt="Invoicing screen: an invoice list showing company, number, date, amount and payment status.">
+          <figcaption>
+            <b>Invoicing</b>
+            <span>Create quotations and invoices, calculate tax, produce the PDF, and record the receivable so it is waiting to be settled.</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Before you start</p>
+        <h2>What this is not</h2>
+        <p class="lead">This is an in-house tool for a small company, running on one machine. It is not a SaaS product. Please check you are comfortable with these constraints before installing it.</p>
+      </div>
+      <div class="limits">
+        <div class="limit">
+          <span class="mark">No auth</span>
+          <div>
+            <b>There is no login</b>
+            <p>Anyone who can reach the service can see every record and delete data. Run it on your own machine; do not expose it to the public internet.</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">Local</span>
+          <div>
+            <b>Data lives in a local SQLite file</b>
+            <p>No cloud sync, no multi-user collaboration. Moving to another machine means moving the file yourself, and backups are your responsibility.</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">Taiwan</span>
+          <div>
+            <b>Built around Taiwanese payment practice</b>
+            <p>The matching logic assumes the last five digits of a virtual account number, and it defaults to New Taiwan dollars with 5% business tax. The interface is in Traditional Chinese.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">Getting started</p>
+        <h2>Run it from source</h2>
+      </div>
+      <div class="start-grid">
+        <div>
+<pre><code><span class="c"># get the source</span>
+git clone https://github.com/VaalRL/public-luk
+cd public-luk
+
+<span class="c"># install and create the database</span>
+npm install
+npx prisma migrate deploy
+
+<span class="c"># start, then open http://localhost:3001</span>
+npm run dev</code></pre>
+        </div>
+        <div>
+          <ul class="reqs">
+            <li><span>Runtime</span><span>Node.js 20+</span></li>
+            <li><span>Database</span><span>SQLite (bundled)</span></li>
+            <li><span>Desktop build</span><span>electron-builder</span></li>
+            <li><span>License</span><span>MIT</span></li>
+          </ul>
+          <p style="margin-top:1.15rem;color:var(--muted);font-size:.9rem;max-width:var(--measure)">
+            The <code style="font-family:var(--mono);font-size:.85rem">xlsx</code> dependency points at the
+            official SheetJS CDN rather than the npm registry. That is deliberate — the registry version is
+            frozen at 2022 and misses later security fixes. If your network blocks that domain, configure a proxy first.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <p><strong style="color:var(--ink)">Luk</strong> — open-source reconciliation for small companies</p>
+      <p style="font-family:var(--mono);font-size:.78rem">MIT License · Interface font Noto Sans TC (SIL OFL 1.1)</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/VaalRL/public-luk">Source</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/LICENSE">License</a>
+      <a href="https://github.com/VaalRL/public-luk/issues">Issues</a>
+    </div>
+  </div>
+</footer>
+
+<script src="theme.js" defer></script>
+</body>
+</html>

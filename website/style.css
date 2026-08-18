@@ -1,0 +1,301 @@
+@font-face{
+  font-family:"Noto Sans TC Local";
+  src:url("fonts/noto-sans-tc-400.woff2") format("woff2");
+  font-weight:400; font-display:swap;
+}
+@font-face{
+  font-family:"Noto Sans TC Local";
+  src:url("fonts/noto-sans-tc-700.woff2") format("woff2");
+  font-weight:700; font-display:swap;
+}
+
+/* ---- tokens: light is the base, complete set ---- */
+:root{
+  --paper:#f6f8f6;
+  --surface:#ffffff;
+  --ink:#0f1412;
+  --muted:#5c6862;
+  --rule:#d3dad5;
+  --rule-strong:#b6c0b9;
+  --settled:#136b41;
+  --settled-wash:#e4f0e9;
+  --open:#9a6414;
+  --open-wash:#f6ecdc;
+  --shadow:0 1px 2px rgba(15,20,18,.05);
+
+  --sans:"Noto Sans TC Local","PingFang TC","Noto Sans TC","Microsoft JhengHei",sans-serif;
+  --mono:ui-monospace,"SF Mono","Cascadia Mono",Menlo,Consolas,monospace;
+
+  --measure:34rem;
+  --page:min(72rem,100% - 3rem);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --paper:#0d110f;
+    --surface:#141a17;
+    --ink:#e6ede8;
+    --muted:#8a968f;
+    --rule:#25302a;
+    --rule-strong:#3a4740;
+    --settled:#4fb37b;
+    --settled-wash:#16281f;
+    --open:#c89440;
+    --open-wash:#2a2216;
+    --shadow:0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0d110f;
+  --surface:#141a17;
+  --ink:#e6ede8;
+  --muted:#8a968f;
+  --rule:#25302a;
+  --rule-strong:#3a4740;
+  --settled:#4fb37b;
+  --settled-wash:#16281f;
+  --open:#c89440;
+  --open-wash:#2a2216;
+  --shadow:0 1px 2px rgba(0,0,0,.4);
+}
+
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+/* grid/flex 子項預設 min-width:auto，內容過寬時會把版面撐開 —— 例如 pre 的最長行。
+   統一允許收縮，並讓寬內容自己捲動，頁面本體永遠不橫向捲。 */
+.hero-grid > *,.start-grid > *,.step > *,.pain > *,.limit > *{min-width:0}
+img,pre{max-width:100%}
+body{
+  margin:0;
+  background:var(--paper);
+  color:var(--ink);
+  font-family:var(--sans);
+  font-size:clamp(15px,.4vw + 14px,17px);
+  line-height:1.75;
+  font-feature-settings:"palt" 1;
+}
+.wrap{width:var(--page);margin-inline:auto}
+a{color:inherit}
+:where(a,button):focus-visible{outline:2px solid var(--settled);outline-offset:3px;border-radius:2px}
+
+/* ---- shared type roles ---- */
+.eyebrow{
+  font-family:var(--mono);
+  font-size:.72rem;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin:0;
+}
+h1,h2,h3{text-wrap:balance;line-height:1.3;margin:0}
+h1{font-size:clamp(2rem,4.4vw,3.15rem);font-weight:700;letter-spacing:-.015em}
+h2{font-size:clamp(1.35rem,2.2vw,1.75rem);font-weight:700}
+h3{font-size:1.02rem;font-weight:700}
+p{margin:0}
+.lead{font-size:clamp(1rem,.7vw + .85rem,1.15rem);color:var(--muted);max-width:var(--measure)}
+
+/* ---- masthead ---- */
+.masthead{
+  border-bottom:1px solid var(--rule);
+  position:sticky;top:0;z-index:20;
+  background:color-mix(in srgb,var(--paper) 88%,transparent);
+  backdrop-filter:blur(8px);
+}
+.masthead .wrap{display:flex;align-items:center;gap:1.5rem;height:3.75rem}
+.brand{display:flex;align-items:baseline;gap:.55rem;text-decoration:none;font-weight:700;letter-spacing:.02em}
+.brand .mark{
+  font-family:var(--mono);font-size:.95rem;font-weight:700;
+  border:1.5px solid var(--ink);padding:.05em .38em;line-height:1.35;
+}
+.brand .ver{font-family:var(--mono);font-size:.7rem;color:var(--muted);font-weight:400}
+.masthead nav{margin-left:auto;display:flex;align-items:center;gap:1.4rem}
+.masthead nav a{
+  font-size:.86rem;text-decoration:none;color:var(--muted);
+  padding-block:.2rem;border-bottom:1px solid transparent;
+}
+.masthead nav a:hover{color:var(--ink);border-bottom-color:var(--rule-strong)}
+.masthead nav a.repo{color:var(--ink);font-weight:700}
+/* 語言切換：與主題切換同一組視覺語彙，但只有一個目標語言所以是連結不是按鈕 */
+.masthead nav a.lang{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;
+  border:1px solid var(--rule-strong);border-bottom-color:var(--rule-strong);
+  padding:.34rem .5rem;line-height:1.5;
+}
+.masthead nav a.lang:hover{color:var(--ink);border-color:var(--ink)}
+@media (max-width:44rem){.nav-hide{display:none}}
+
+/* ---- theme switch ---- */
+.theme{
+  display:flex;align-items:center;gap:0;
+  border:1px solid var(--rule-strong);
+}
+.theme button{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.06em;
+  background:none;border:0;color:var(--muted);cursor:pointer;
+  padding:.34rem .5rem;line-height:1.5;
+}
+.theme button + button{border-left:1px solid var(--rule-strong)}
+.theme button:hover{color:var(--ink)}
+.theme button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
+
+/* ---- hero ---- */
+.hero{padding-block:clamp(3rem,7vw,5.5rem) clamp(2.5rem,5vw,4rem)}
+.hero-grid{display:grid;gap:clamp(2.5rem,4vw,3.5rem)}
+@media (min-width:64rem){.hero-grid{grid-template-columns:minmax(0,.92fr) minmax(0,1.08fr);align-items:center}}
+.hero-copy{display:flex;flex-direction:column;gap:1.35rem;align-items:flex-start}
+.cta-row{display:flex;flex-wrap:wrap;gap:.7rem;margin-top:.3rem}
+.btn{
+  font-family:var(--mono);font-size:.84rem;letter-spacing:.02em;
+  text-decoration:none;padding:.62rem 1.05rem;border:1px solid var(--ink);
+  display:inline-flex;align-items:center;gap:.5rem;transition:background .15s,color .15s;
+}
+.btn-primary{background:var(--ink);color:var(--paper)}
+.btn-primary:hover{background:var(--settled);border-color:var(--settled)}
+.btn-ghost{color:var(--ink);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--ink)}
+
+/* ---- the ledger: the page's thesis ---- */
+.ledger{
+  background:var(--surface);
+  border:1px solid var(--rule);
+  box-shadow:var(--shadow);
+  padding:1.15rem clamp(1rem,2vw,1.6rem) 1.35rem;
+}
+.ledger-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:.7rem;border-bottom:1.5px solid var(--ink);
+}
+.ledger-side{padding-top:1.15rem}
+.ledger-side + .ledger-side{border-top:1px dashed var(--rule);margin-top:1.15rem}
+.row{
+  display:grid;grid-template-columns:auto 1fr auto;gap:.5rem 1rem;
+  align-items:baseline;padding-block:.42rem;
+}
+.row .date{font-family:var(--mono);font-size:.78rem;color:var(--muted)}
+.row .what{min-width:0}
+.row .name{display:block;font-size:.92rem}
+.row .memo{display:block;font-family:var(--mono);font-size:.78rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row .amt{font-family:var(--mono);font-variant-numeric:tabular-nums;font-size:.95rem;font-weight:700;text-align:right}
+.key{
+  background:var(--settled-wash);color:var(--settled);
+  font-weight:700;padding:.05em .3em;border-radius:2px;
+}
+.tag{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.08em;text-transform:uppercase;
+  padding:.12em .45em;border:1px solid currentColor;white-space:nowrap;
+}
+.tag-settled{color:var(--settled);background:var(--settled-wash)}
+.match{
+  display:flex;align-items:center;gap:.7rem;
+  margin-top:1.15rem;padding-top:.9rem;border-top:1.5px solid var(--ink);
+  font-family:var(--mono);font-size:.79rem;color:var(--settled);
+}
+.match .bar{flex:1;height:2px;background:var(--settled);transform-origin:left;animation:draw .7s .25s cubic-bezier(.2,.7,.3,1) both}
+.match .verdict{font-weight:700;letter-spacing:.02em}
+@keyframes draw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.match .bar{animation:none}}
+
+/* ---- worked examples ---- */
+.cases{display:grid;gap:clamp(2rem,3.5vw,2.75rem)}
+@media (min-width:60rem){.cases{grid-template-columns:1fr 1fr;align-items:start}}
+.case{display:flex;flex-direction:column;gap:.9rem;min-width:0}
+.case-intro{display:flex;flex-direction:column;gap:.3rem}
+.case-intro b{font-size:1rem}
+.case-intro span{color:var(--muted);font-size:.92rem}
+.alloc{width:100%;border-collapse:collapse;font-size:.86rem}
+.alloc caption{
+  caption-side:top;text-align:left;font-family:var(--mono);font-size:.7rem;
+  letter-spacing:.1em;text-transform:uppercase;color:var(--muted);padding-bottom:.5rem;
+}
+.alloc th,.alloc td{padding:.42rem .5rem;border-bottom:1px solid var(--rule);text-align:left}
+.alloc th{
+  font-family:var(--mono);font-size:.68rem;letter-spacing:.06em;text-transform:uppercase;
+  color:var(--muted);font-weight:400;border-bottom-color:var(--rule-strong);
+}
+.alloc td:first-child,.alloc th:first-child{padding-left:0}
+.alloc td:last-child,.alloc th:last-child{padding-right:0;text-align:right}
+.alloc .n{font-family:var(--mono);font-variant-numeric:tabular-nums;text-align:right}
+.alloc th.n{text-align:right}
+.alloc tfoot td{border-bottom:0;border-top:1.5px solid var(--ink);font-weight:700;padding-top:.6rem}
+.alloc .give{color:var(--settled);font-weight:700}
+.state{font-family:var(--mono);font-size:.66rem;letter-spacing:.06em;text-transform:uppercase}
+.state.ok{color:var(--settled)}
+.state.part{color:var(--open)}
+.state.hold{color:var(--open)}
+.verdict-note{
+  display:flex;gap:.6rem;align-items:flex-start;
+  border-left:2px solid var(--settled);padding:.15rem 0 .15rem .8rem;
+  font-size:.9rem;color:var(--muted);
+}
+.verdict-note.warn{border-left-color:var(--open)}
+.verdict-note b{color:var(--ink);font-weight:700}
+
+/* ---- sections ---- */
+section{padding-block:clamp(3rem,6vw,4.75rem);border-top:1px solid var(--rule)}
+.sec-head{display:flex;flex-direction:column;gap:.75rem;max-width:var(--measure);margin-bottom:clamp(2rem,3.5vw,2.75rem)}
+
+/* problem */
+.pains{display:grid;gap:0;border-top:1px solid var(--rule)}
+.pain{display:grid;gap:.35rem .9rem;padding-block:1.15rem;border-bottom:1px solid var(--rule)}
+@media (min-width:48rem){.pain{grid-template-columns:13rem 1fr;align-items:start}}
+.pain dt{font-weight:700;font-size:.98rem}
+.pain dd{margin:0;color:var(--muted);max-width:var(--measure)}
+
+/* steps — a real sequence, so numbered */
+.steps{display:grid;gap:0;counter-reset:step;border-top:1px solid var(--rule)}
+.step{
+  display:grid;gap:.4rem 1.1rem;padding-block:1.5rem;border-bottom:1px solid var(--rule);
+  grid-template-columns:auto 1fr;
+}
+@media (min-width:52rem){.step{grid-template-columns:auto 14rem 1fr;align-items:start}}
+.step::before{
+  counter-increment:step;content:counter(step,decimal-leading-zero);
+  font-family:var(--mono);font-size:.78rem;color:var(--settled);padding-top:.28rem;
+}
+.step h3{grid-column:2/-1}
+@media (min-width:52rem){.step h3{grid-column:2}}
+.step p{grid-column:2/-1;color:var(--muted);max-width:var(--measure)}
+@media (min-width:52rem){.step p{grid-column:3}}
+
+/* shots */
+.shots{display:grid;gap:clamp(2rem,3.5vw,3rem)}
+figure{margin:0;display:flex;flex-direction:column;gap:.8rem}
+figure img{
+  width:100%;height:auto;display:block;
+  border:1px solid var(--rule);box-shadow:var(--shadow);background:var(--surface);
+}
+figcaption{display:flex;flex-direction:column;gap:.2rem;max-width:var(--measure)}
+figcaption b{font-size:.95rem}
+figcaption span{color:var(--muted);font-size:.9rem}
+
+/* honest limits */
+.limits{display:grid;gap:0;border-top:1px solid var(--rule)}
+.limit{display:grid;gap:.35rem .9rem;padding-block:1.15rem;border-bottom:1px solid var(--rule)}
+@media (min-width:48rem){.limit{grid-template-columns:auto 1fr;align-items:start}}
+.limit .mark{
+  font-family:var(--mono);font-size:.7rem;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--open);padding-top:.3rem;min-width:6.5rem;
+}
+.limit b{display:block;font-size:.98rem}
+.limit p{color:var(--muted);max-width:var(--measure)}
+
+/* start */
+.start-grid{display:grid;gap:clamp(1.75rem,3vw,2.5rem)}
+@media (min-width:56rem){.start-grid{grid-template-columns:1fr 1fr}}
+pre{
+  margin:0;background:var(--surface);border:1px solid var(--rule);
+  padding:1rem 1.15rem;overflow-x:auto;font-family:var(--mono);font-size:.82rem;line-height:1.85;
+}
+pre .c{color:var(--muted)}
+.reqs{list-style:none;margin:0;padding:0;border-top:1px solid var(--rule)}
+.reqs li{
+  display:flex;justify-content:space-between;gap:1rem;
+  padding-block:.7rem;border-bottom:1px solid var(--rule);font-size:.93rem;
+}
+.reqs li span:last-child{font-family:var(--mono);font-size:.83rem;color:var(--muted);text-align:right}
+
+/* footer */
+footer{border-top:1px solid var(--rule);padding-block:2.5rem 3.25rem;color:var(--muted);font-size:.87rem}
+.foot-grid{display:flex;flex-wrap:wrap;gap:1.5rem 2.5rem;align-items:baseline;justify-content:space-between}
+.foot-links{display:flex;flex-wrap:wrap;gap:1.25rem}
+footer a{text-decoration:none;border-bottom:1px solid var(--rule-strong)}
+footer a:hover{color:var(--ink)}
