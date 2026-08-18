@@ -4,6 +4,7 @@ import { format } from 'date-fns';
 import { registerPdfFonts } from '@/lib/pdf-fonts';
 import type { PdfInvoice, PdfBankAccount, PdfCompany } from "@/types/invoice-pdf";
 import { defaultProvider } from "@/lib/default-provider";
+import { derivedTaxRate } from "@/lib/invoice-total";
 
 // Register fonts once
 registerPdfFonts();
@@ -192,6 +193,7 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
         reimbursementItems,
         serviceSubtotal,
         serviceTax,
+        taxRate,
         serviceTotal,
         reimbursementTotal,
         grandTotal,
@@ -211,7 +213,11 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
 
         // Pre-calculate totals for performance
         const serviceSubtotal = serviceItems.reduce((sum: number, item: InvoiceItem) => sum + item.amount, 0);
-        const serviceTax = Math.round(serviceSubtotal * ((invoice.taxAmount ?? 0) > 0 ? 0.05 : 0));
+        // 稅額一律採用帳單上已儲存的值，不要在這裡重算。
+        // 先前寫死 0.05 重算，稅率不是 5% 時，PDF 印出的稅額與總計
+        // 會與資料庫裡的帳不一致 —— 寄給客戶的單據和自己的帳對不起來。
+        const serviceTax = Math.round(invoice.taxAmount ?? 0);
+        const taxRate = derivedTaxRate(serviceSubtotal, serviceTax);
         const serviceTotal = serviceSubtotal + serviceTax;
 
         const reimbursementTotal = reimbursementItems.reduce((sum: number, item: InvoiceItem) => sum + item.amount, 0);
@@ -223,6 +229,7 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
             reimbursementItems,
             serviceSubtotal,
             serviceTax,
+            taxRate,
             serviceTotal,
             reimbursementTotal,
             grandTotal,
@@ -356,7 +363,7 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                             <Text>${serviceSubtotal.toLocaleString()}</Text>
                         </View>
                         <View style={styles.totalRow}>
-                            <Text>營業稅 (5%)：</Text>
+                            <Text>營業稅 ({taxRate}%)：</Text>
                             <Text>${serviceTax.toLocaleString()}</Text>
                         </View>
                         <View style={[styles.totalRow, { borderTopWidth: 1, borderTopColor: '#000', paddingTop: 4 }]}>
@@ -418,6 +425,13 @@ export const InvoicePdfDocument = React.memo(({ invoice }: InvoicePdfProps) => {
                     </View>
                 )}
 
+                {/* 用印：stampContainer / stamp 樣式本來就寫好了，只是從來沒有畫出來 */}
+                {provider.stampPath && (
+                    <View style={styles.stampContainer}>
+                        {/* eslint-disable-next-line jsx-a11y/alt-text -- @react-pdf/renderer 的 Image 沒有 alt 屬性 */}
+                        <Image src={provider.stampPath} style={styles.stamp} />
+                    </View>
+                )}
 
             </Page>
         </Document>
