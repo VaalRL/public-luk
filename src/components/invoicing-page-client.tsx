@@ -50,9 +50,11 @@ interface InvoicingPageClientProps {
     companies: Company[];
     invoices: Invoice[];
     itemTemplates: { id: string; name: string; price: number; quantity: number }[];
+    /** 新帳單的預設標題，來自報價單版型設定 */
+    defaultTitle: string;
 }
 
-export function InvoicingPageClient({ companies, invoices, itemTemplates }: InvoicingPageClientProps) {
+export function InvoicingPageClient({ companies, invoices, itemTemplates, defaultTitle }: InvoicingPageClientProps) {
     const router = useRouter();
     const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<'list' | 'view' | 'edit'>('list');
@@ -127,6 +129,7 @@ export function InvoicingPageClient({ companies, invoices, itemTemplates }: Invo
             <InvoiceForm
                 companies={companies}
                 itemTemplates={itemTemplates}
+                defaultTitle={defaultTitle}
                 initialData={selectedInvoice}
                 existingInvoices={invoices}
                 onSuccess={handleSuccess}

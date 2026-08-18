@@ -22,7 +22,10 @@ const MAX_LABEL_LENGTH = 60;
 const label = z.string().trim().max(MAX_LABEL_LENGTH);
 
 export const pdfLabelsSchema = z.object({
-    /** 帳單沒有自訂標題時用的預設標題 */
+    /**
+     * 新帳單的預設標題（開新帳單時填入表單），同時也是帳單標題為空時
+     * PDF 上的後備標題。
+     */
     documentTitle: z.string().trim().min(1).max(MAX_LABEL_LENGTH),
     date: label,
     invoiceNumber: label,
@@ -98,6 +101,20 @@ export const pdfLayoutSchema = z.object({
 });
 
 export type PdfLayout = z.infer<typeof pdfLayoutSchema>;
+export type PdfPageSize = PdfLayout["pageSize"];
+
+/** 各紙張的高度（pt）。@react-pdf 內部用的也是這組數字。 */
+export const PAGE_HEIGHT_PT: Record<PdfPageSize, number> = {
+    A4: 841.89,
+    A5: 595.28,
+    LETTER: 792,
+    LEGAL: 1008,
+};
+
+/** 扣掉上下留白後，一頁真正裝得下內容的高度（pt） */
+export function usablePageHeight(layout: PdfLayout): number {
+    return PAGE_HEIGHT_PT[layout.pageSize] - layout.pagePadding * 2;
+}
 
 export const pdfOptionsSchema = z.object({
     currencySymbol: z.string().trim().max(4),

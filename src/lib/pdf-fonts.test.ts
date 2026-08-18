@@ -14,10 +14,12 @@
  * 那本身就值得看一眼，因此這裡不做 skip。
  */
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import fs from 'node:fs';
 import path from 'node:path';
 import * as fontkit from 'fontkit';
+
+vi.mock('@react-pdf/renderer', () => ({ Font: { register: vi.fn() } }));
 
 const FONTS = path.join(process.cwd(), 'public', 'fonts');
 const files = ['noto-sans-tc-pdf-400.woff', 'noto-sans-tc-pdf-700.woff'];
@@ -38,8 +40,17 @@ describe('PDF 字型檔', () => {
     });
 
     it('註冊的字型路徑與實際存在的檔案一致', async () => {
-        const source = fs.readFileSync(path.join(process.cwd(), 'src', 'lib', 'pdf-fonts.ts'), 'utf-8');
-        const registered = [...source.matchAll(/src:\s*'\/fonts\/([^']+)'/g)].map((m) => m[1]);
+        // 直接看 registerPdfFonts() 實際註冊了什麼，而不是用正規表達式讀原始碼
+        // —— 換個引號或換行就誤報的測試沒有意義。
+        const { Font } = await import('@react-pdf/renderer');
+        const { registerPdfFonts } = await import('./pdf-fonts');
+        registerPdfFonts();
+
+        const register = vi.mocked(Font.register);
+        expect(register).toHaveBeenCalledTimes(1);
+
+        const registered = (register.mock.calls[0][0] as { fonts: { src: string }[] }).fonts
+            .map((f) => f.src.replace('/fonts/', ''));
 
         expect(registered).toHaveLength(2);
         for (const file of registered) {

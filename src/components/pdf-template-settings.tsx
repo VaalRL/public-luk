@@ -24,7 +24,7 @@ import { sampleInvoiceForPreview } from "@/lib/pdf-template-sample";
 
 /** 標籤欄位在畫面上的顯示名稱 */
 const labelNames: Record<PdfLabelKey, string> = {
-    documentTitle: "預設標題",
+    documentTitle: "預設標題（開新帳單時帶入）",
     date: "日期",
     invoiceNumber: "單號",
     clientBlock: "買方區塊標題",
@@ -88,7 +88,7 @@ type ColumnKey = keyof PdfColumnWidths;
 const toggles = [
     { key: "showLogo", name: "顯示 Logo" },
     { key: "showStamp", name: "顯示用印" },
-    { key: "showTaxRow", name: "顯示稅額列" },
+    { key: "showTaxRow", name: "顯示稅額列（關閉後服務總計仍含稅）" },
     { key: "showBankAccounts", name: "顯示收款資訊" },
     { key: "showSignatures", name: "顯示簽章欄" },
 ] as const;
@@ -132,18 +132,29 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
     const setOption = <K extends keyof PdfTemplate["options"]>(key: K, value: PdfTemplate["options"][K]) =>
         setTemplate((t) => ({ ...t, options: { ...t.options, [key]: value } }));
 
-    /** 把畫面上的字串數字轉回設定物件；有非數字時回傳 null 由呼叫端擋下 */
+    /**
+     * 把畫面上的字串數字轉回設定物件；有欄位不是數字時回傳 null 由呼叫端擋下。
+     *
+     * 空字串要當成錯誤，不能交給 Number() —— Number("") 是 0，
+     * 而留白、印章位置的下限就是 0，欄位被清空會無聲存成 0（內容貼到紙邊）。
+     */
+    const toNumber = (raw: string): number | null => {
+        if (raw.trim() === "") return null;
+        const n = Number(raw);
+        return Number.isFinite(n) ? n : null;
+    };
+
     const buildTemplate = (): PdfTemplate | null => {
         const layout = { ...template.layout };
         for (const f of layoutNumberFields) {
-            const n = Number(numbers[f.key]);
-            if (!Number.isFinite(n)) return null;
+            const n = toNumber(numbers[f.key]);
+            if (n === null) return null;
             layout[f.key] = n;
         }
         const columnWidths = { ...template.layout.columnWidths };
         for (const c of columnFields) {
-            const n = Number(numbers.columns[c.key]);
-            if (!Number.isFinite(n)) return null;
+            const n = toNumber(numbers.columns[c.key]);
+            if (n === null) return null;
             columnWidths[c.key] = n;
         }
         return { ...template, layout: { ...layout, columnWidths } };
@@ -152,7 +163,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
     const handleSave = async () => {
         const payload = buildTemplate();
         if (!payload) {
-            toast({ title: "儲存失敗", description: "版面欄位必須是數字", variant: "destructive" });
+            toast({ title: "儲存失敗", description: "版面欄位不可留空，且必須是數字", variant: "destructive" });
             return;
         }
 
@@ -162,6 +173,8 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             if (result.success) {
                 setTemplate(result.data);
                 setNumbers(toDraft(result.data));
+                // 舊的預覽已經不代表現在的設定了，清掉以免誤導
+                setPreviewUrl(null);
                 toast({ title: "儲存成功", description: "報價單版型已更新" });
             } else {
                 toast({ title: "儲存失敗", description: result.error, variant: "destructive" });
@@ -178,6 +191,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
             if (result.success) {
                 setTemplate(result.data);
                 setNumbers(toDraft(result.data));
+                setPreviewUrl(null);
                 toast({ title: "已還原", description: "版型已回到預設值" });
             } else {
                 toast({ title: "還原失敗", description: result.error, variant: "destructive" });
@@ -197,7 +211,7 @@ export function PdfTemplateSettings({ initialTemplate }: PdfTemplateSettingsProp
     const handlePreview = async () => {
         const payload = buildTemplate();
         if (!payload) {
-            toast({ title: "無法預覽", description: "版面欄位必須是數字", variant: "destructive" });
+            toast({ title: "無法預覽", description: "版面欄位不可留空，且必須是數字", variant: "destructive" });
             return;
         }
 

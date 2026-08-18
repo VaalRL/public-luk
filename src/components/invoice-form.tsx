@@ -22,6 +22,8 @@ interface InvoiceFormProps {
     itemTemplates: ItemTemplate[];
     initialData?: Invoice | null;
     existingInvoices?: Invoice[];
+    /** 新帳單的預設標題，來自報價單版型設定 */
+    defaultTitle?: string;
     onSuccess?: () => void;
     onCancel?: () => void;
 }
@@ -31,6 +33,7 @@ export function InvoiceForm({
     itemTemplates,
     initialData,
     existingInvoices: _existingInvoices = [],
+    defaultTitle,
     onSuccess,
     onCancel,
 }: InvoiceFormProps) {
@@ -42,6 +45,7 @@ export function InvoiceForm({
     } = useInvoiceForm({
         initialData,
         itemTemplates,
+        defaultTitle,
         onSuccess,
         onCancel,
     });

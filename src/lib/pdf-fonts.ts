@@ -7,8 +7,10 @@ import { Font } from '@react-pdf/renderer';
  * @react-pdf/renderer 內嵌 woff2 時會在瀏覽器端丟出
  * 「Cannot read properties of undefined (reading 'version')」，
  * 整個報價單產生流程失敗，使用者只會看到「PDF 生成失敗，請稍後再試」。
- * （woff2 需要一個以 data: URI 載入的 brotli WebAssembly 模組，
- * 在本專案的 CSP 下會被擋掉；就算放行，字型仍解析失敗。）
+ * （woff2 需要一個以 data: URI 載入的 brotli WebAssembly 模組。
+ * CSP 已放行該來源，但即使能載入，瀏覽器端仍解析不出字型 —— 實測過。
+ * 同一個 woff2 在 Node 下反而正常，所以這個故障沒辦法用 Node 測試守住，
+ * 改由 pdf-fonts.test.ts 直接檢查檔頭必須是 wOFF。）
  *
  * 字型檔由 scripts/build-pdf-fonts.py 產生（合併 @fontsource 的多個子集）。
  * 不要改用 @fontsource 單一子集或舊的 *-optimized/*-subset 檔案：

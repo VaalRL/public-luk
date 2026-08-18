@@ -115,20 +115,9 @@ function createStyles(layout: PdfLayout) {
             justifyContent: 'space-between',
             marginBottom: 4,
         },
-        footer: {
-            marginTop: 30,
-            borderTopWidth: 1,
-            borderTopColor: '#ccc',
-            paddingTop: 10,
-        },
         footerNote: {
             marginTop: 20,
             fontSize: Math.max(6, layout.baseFontSize - 1),
-            lineHeight: 1.5,
-        },
-        bankInfo: {
-            marginTop: 10,
-            fontSize: 9,
             lineHeight: 1.5,
         },
         stampContainer: {

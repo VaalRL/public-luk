@@ -10,6 +10,8 @@ import { Invoice, InvoiceReminder, ItemTemplate } from "@/components/features/in
 interface UseInvoiceFormProps {
     initialData?: Invoice | null;
     itemTemplates: ItemTemplate[];
+    /** 新帳單的預設標題，來自報價單版型設定 */
+    defaultTitle?: string;
     onSuccess?: () => void;
     onCancel?: () => void;
 }
@@ -17,6 +19,7 @@ interface UseInvoiceFormProps {
 export function useInvoiceForm({
     initialData,
     itemTemplates,
+    defaultTitle = "報價單",
     onSuccess,
     onCancel,
 }: UseInvoiceFormProps) {
@@ -55,7 +58,7 @@ export function useInvoiceForm({
             items: items,
             taxRate: 5,
             issueInvoice: true,
-            title: "報價單",
+            title: defaultTitle,
         },
     });
 
@@ -111,7 +114,7 @@ export function useInvoiceForm({
             setValue("providerId", initialData.providerId || "");
             setValue("date", new Date(initialData.date));
             setValue("invoiceNumber", initialData.invoiceNumber || "");
-            setValue("title", initialData.title || "報價單");
+            setValue("title", initialData.title || defaultTitle);
 
             const shouldIssueInvoice = (initialData as { issueInvoice?: boolean }).issueInvoice ?? true;
             setValue("issueInvoice", shouldIssueInvoice);
@@ -126,7 +129,9 @@ export function useInvoiceForm({
                 );
             }
         }
-    }, [initialData, setValue]);
+        // defaultTitle 只在帳單標題為空時用得到；它來自伺服器端的設定，
+        // 編輯過程中不會變，列進相依陣列只是為了讓規則一致
+    }, [initialData, defaultTitle, setValue]);
 
     // Sync items to form
     useEffect(() => {

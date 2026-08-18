@@ -33,8 +33,11 @@ export async function getPdfTemplate(): Promise<PdfTemplate> {
 /**
  * 儲存版型設定。
  *
- * 存進資料庫的一律是「與預設值合併後的完整設定」，不是使用者送來的片段：
- * 這樣之後新增欄位時舊資料不會缺鍵，讀取端也不必處理半套設定。
+ * 送進來的可以是片段，會疊在「目前已儲存的設定」之上 —— 不是疊在預設值上。
+ * 這個差別很重要：只想改附註的呼叫端，不該把使用者調過的標籤與版面全部洗掉。
+ *
+ * 存進資料庫的則一律是合併後的完整設定，這樣之後新增欄位時舊資料不會缺鍵，
+ * 讀取端也不必處理半套設定。
  */
 export async function savePdfTemplate(rawData: unknown): Promise<ActionResult<PdfTemplate>> {
     return withErrorHandling(async () => {
@@ -51,10 +54,11 @@ export async function savePdfTemplate(rawData: unknown): Promise<ActionResult<Pd
             );
         }
         const input = parsed.data;
+        const current = await getPdfTemplate();
         const merged = resolvePdfTemplate({
-            labels: { ...defaultPdfTemplate.labels, ...input.labels },
-            layout: { ...defaultPdfTemplate.layout, ...input.layout },
-            options: { ...defaultPdfTemplate.options, ...input.options },
+            labels: { ...current.labels, ...input.labels },
+            layout: { ...current.layout, ...input.layout },
+            options: { ...current.options, ...input.options },
         });
 
         await prisma.systemConfig.upsert({

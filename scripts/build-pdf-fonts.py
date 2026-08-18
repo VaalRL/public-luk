@@ -14,9 +14,10 @@
 
 為什麼輸出 woff 而不是 woff2
 ---------------------------
-@react-pdf/renderer 內嵌 woff2 會在瀏覽器端失敗（需要以 data: URI 載入
-brotli WebAssembly，被本專案的 CSP 擋下；即使放行也解析不出字型），
-使用者只會看到「PDF 生成失敗」。詳見 src/lib/pdf-fonts.ts 的註解。
+@react-pdf/renderer 內嵌 woff2 會在瀏覽器端失敗，使用者只會看到
+「PDF 生成失敗」。同一個檔案在 Node 下反而正常，所以這個故障只能靠
+瀏覽器實測或靜態檢查守住。詳見 src/lib/pdf-fonts.ts 與
+docs/performance/PDF_FONT_OPTIMIZATION.md。
 
 使用方式
 --------

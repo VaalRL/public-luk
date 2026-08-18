@@ -40,7 +40,7 @@ describe('PDF 版型設定', () => {
         expect(await getPdfTemplate()).toEqual(defaultPdfTemplate);
     }, 60_000);
 
-    it('儲存後讀得回來，且只送部分欄位也會補齊', async () => {
+    it('儲存後讀得回來，沒送的欄位補上預設值', async () => {
         const { getPdfTemplate, savePdfTemplate } = await import('./pdf-template');
 
         const result = await savePdfTemplate({
@@ -53,9 +53,24 @@ describe('PDF 版型設定', () => {
         expect(stored.labels.grandTotal).toBe('應付總額：');
         expect(stored.options.currencySymbol).toBe('NT$');
         expect(stored.options.showSignatures).toBe(true);
-        // 沒送的欄位補上預設值
+        // 第一次儲存時沒有既有設定，沒送的欄位補上預設值
         expect(stored.labels.subtotal).toBe(defaultPdfTemplate.labels.subtotal);
         expect(stored.layout).toEqual(defaultPdfTemplate.layout);
+    }, 60_000);
+
+    // 部分更新必須疊在已儲存的設定上。疊在預設值上的話，
+    // 只想改附註的呼叫端會把使用者調過的所有標籤與版面洗掉。
+    it('再次部分儲存時，不會洗掉先前存過的設定', async () => {
+        const { getPdfTemplate, savePdfTemplate } = await import('./pdf-template');
+
+        await savePdfTemplate({ options: { footerNote: '本報價單有效期 30 天。' } });
+
+        const stored = await getPdfTemplate();
+        expect(stored.options.footerNote).toBe('本報價單有效期 30 天。');
+        // 上一個測試存的值必須還在
+        expect(stored.labels.grandTotal).toBe('應付總額：');
+        expect(stored.options.currencySymbol).toBe('NT$');
+        expect(stored.options.showSignatures).toBe(true);
     }, 60_000);
 
     it('欄寬總和不等於 100 會被拒絕，且不影響已存的設定', async () => {

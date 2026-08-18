@@ -1,180 +1,88 @@
-# PDF 字型優化總結
+# PDF 字型
 
-## 日期
-2025-12-04
+報價單 PDF 使用 Noto Sans TC。這份文件說明字型檔怎麼來的，以及為什麼是這個做法。
 
-## 問題
-1. PDF 中部分中文字符（如全形冒號「：」）無法正確顯示
-2. 需要支援離線使用
-3. 需要提高 PDF 生成速度
+## 現況
 
-## 解決方案
+| 項目 | 值 |
+| --- | --- |
+| 字型檔 | `public/fonts/noto-sans-tc-pdf-400.woff`、`noto-sans-tc-pdf-700.woff` |
+| 格式 | **WOFF**（不可以是 WOFF2，見下） |
+| 大小 | 各約 1.33 MB |
+| 字數 | 約 6,700 字，含全形標點 |
+| 產生方式 | `python3 scripts/build-pdf-fonts.py` |
+| 註冊位置 | `src/lib/pdf-fonts.ts` |
 
-### 1. 字型優化策略
-採用**自訂字型子集**方案，在保持完整字符支援的同時大幅縮減檔案體積。
+重新產生字型：
 
-### 2. 優化結果
-
-| 字型 | 原始大小 | 優化後大小 | 縮減比例 |
-|------|---------|-----------|---------|
-| Noto Sans TC 400 | 1.30 MB | 246.19 KB | **81.5%** |
-| Noto Sans TC 700 | 1.32 MB | 252.26 KB | **81.3%** |
-
-### 3. 字符覆蓋範圍
-優化後的字型包含：
-- **1,737 個字符**（去重後）
-- 固定 PDF 文字：224 個字符
-- 常用中文字：1,609 個字符
-- 全形和半形標點符號
-- 英文字母、數字
-- 特殊符號
-
-### 4. 實施步驟
-
-#### 步驟 1：生成字符清單
-```powershell
-node scripts/generate-font-subset.js
-```
-- 輸出：`font-subset-output/unicode-chars.txt`
-- 輸出：`font-subset-output/characters.txt`
-
-#### 步驟 2：安裝字型工具
-```powershell
-pip install fonttools brotli
-```
-
-#### 步驟 3：生成優化字型
-```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/optimize-fonts.ps1
-```
-- 使用 `fonttools` 的 `pyftsubset` 工具
-- 生成 WOFF2 格式（比 WOFF 小 30%）
-- 保留所有布局特性（`--layout-features="*"`）
-- 移除 hinting（減小檔案）
-
-#### 步驟 4：更新字型配置
-```powershell
-powershell -ExecutionPolicy Bypass -File ./scripts/Update-PdfFontConfig.ps1
-```
-- 自動更新 `src/lib/pdf-fonts.ts`
-- 使用新的優化字型
-
-### 5. 技術細節
-
-#### 字型檔案
-- **格式**：WOFF2（Web Open Font Format 2）
-- **位置**：`public/fonts/`
-  - `noto-sans-tc-400-optimized.woff2`
-  - `noto-sans-tc-700-optimized.woff2`
-
-#### 優化參數
 ```bash
-pyftsubset [source-font] \
-  --unicodes-file=[unicode-list] \
-  --flavor=woff2 \
-  --output-file=[output-font] \
-  --layout-features="*" \
-  --no-hinting
+pip install fonttools
+npm install                        # 需要 node_modules/@fontsource/noto-sans-tc
+python3 scripts/build-pdf-fonts.py
 ```
 
-### 6. 預期效果
+腳本會自我驗收：合併後若仍缺必要字元會直接失敗。`src/lib/pdf-fonts.test.ts`
+也會檢查產出的檔案是 WOFF、且涵蓋單據上會用到的標點。
 
-#### ✅ 字符支援
-- 所有 PDF 固定文字正確顯示
-- 全形冒號「：」等標點符號正確顯示
-- 常用中文字（覆蓋 95% 日常使用）
-- 公司、行業、財務相關術語
+## 為什麼不能用 WOFF2
 
-#### ✅ 效能提升
-- **字型載入時間**：減少 81%
-- **PDF 生成速度**：提升 3-5 倍
-- **記憶體使用**：降低 80%
-- **檔案體積**：每個字型從 ~1.3 MB 降至 ~250 KB
+`@react-pdf/renderer` 在瀏覽器端內嵌 WOFF2 會丟出
+`Cannot read properties of undefined (reading 'version')`，PDF 完全產不出來，
+使用者只會看到「PDF 生成失敗，請稍後再試」。
 
-#### ✅ 離線使用
-- 字型檔案內建於應用程式中
-- 不需要網路連接
-- Electron 打包時自動包含
+這個故障**只發生在瀏覽器**。同一個 WOFF2 檔在 Node 下用 `renderToBuffer`
+可以正常產出 PDF —— 因為打包給瀏覽器的 fontkit 需要一個以 `data:` URI
+載入的 brotli WebAssembly 模組，Node 版走的是另一條路徑。
 
-### 7. 維護
+這代表**任何 Node 端的測試都覆蓋不到這個故障**，所以守門的方式是靜態檢查
+檔頭必須是 `wOFF`（`src/lib/pdf-fonts.test.ts`），而不是產一份 PDF 出來看。
+改字型後請一併用瀏覽器實際下載一張帳單確認。
 
-#### 新增字符
-如果需要支援更多字符：
+## 為什麼要自己合併子集
 
-1. 編輯 `scripts/generate-font-subset.js`
-2. 在 `fixedTexts` 或 `commonChineseChars` 中新增字符
-3. 重新執行優化流程：
-   ```powershell
-   node scripts/generate-font-subset.js
-   powershell -File scripts/optimize-fonts.ps1
-   ```
+`@fontsource/noto-sans-tc` 把字型切成一百多個 unicode-range 子集，瀏覽器
+按需載入；但 PDF 產生器只吃單一檔案。
 
-#### 檢查字符覆蓋
-生成的字符清單位於：
-- `font-subset-output/characters.txt`（所有字符）
-- `font-subset-output/unicode-chars.txt`（Unicode 編碼）
+若直接拿其中的 `chinese-traditional` 子集來用（本專案 2026-08 之前的做法），
+**該子集沒有全形標點**：`：（），！？；％／` 全部缺席。缺字不會報錯，
+只會從印出來的單據上消失 —— 客戶名稱、地址、備註裡的標點就這樣不見，
+收到的人也不會知道。
 
-### 8. 對比方案
+`scripts/build-pdf-fonts.py` 的做法：
 
-| 方案 | 檔案大小 | 字符支援 | 載入速度 | 適用場景 |
-|------|---------|---------|---------|---------|
-| 完整字型 | 3-4 MB | 20,000+ 字 | 慢 | 需要支援所有罕見字 |
-| 舊版子集 | 100-150 KB | ~3,000 字 | 快 | 基礎中文，**標點可能缺失** ❌ |
-| **優化子集（當前）** | **~250 KB** | **1,700+ 字** | **快** | **專案實際需求** ✅ |
+1. 以 `chinese-traditional` 子集為基底（常用漢字）。
+2. 掃過所有子集，挑出能補齊缺字的那些（目前 20 個）合併進來。
+3. 合併會夾帶大量用不到的漢字，所以再切一次，只留基底原有的字加上要補的標點。
+   同時關掉 `layout_closure` —— 開著會為了直排替代字把字數從 6.7k 拉到 9.8k。
 
-### 9. 相關檔案
+第 3 步不是為了省空間而已：字型愈大瀏覽器產生 PDF 就愈慢。實測同一張帳單，
+2.0 MB 版本要 34 秒、1.33 MB 版本 21 秒（容器內 headless Chromium，
+絕對值偏高，重點是差距）。
 
-#### 新增檔案
-- `scripts/generate-font-subset.js` - 字符清單生成腳本
-- `scripts/optimize-fonts.ps1` - 字型優化腳本
-- `scripts/Update-PdfFontConfig.ps1` - 配置更新腳本
-- `public/fonts/noto-sans-tc-400-optimized.woff2` - 優化字型 400
-- `public/fonts/noto-sans-tc-700-optimized.woff2` - 優化字型 700
-- `font-subset-output/unicode-chars.txt` - Unicode 字符清單
-- `font-subset-output/characters.txt` - 字符清單
+上游本身沒有的 40 個罕用符號（bidi 控制字元、假名重複符號等）不列入驗收。
 
-#### 修改檔案
-- `src/lib/pdf-fonts.ts` - 更新字型路徑
-- `src/components/invoice-pdf.tsx` - 使用全形冒號
+## 授權
 
-### 10. 測試檢查清單
+Noto Sans TC 以 SIL Open Font License 1.1 釋出，版權行為 "Google Inc."，
+**沒有** Reserved Font Name 宣告，因此衍生字型沿用原名稱是允許的。
+授權條款必須隨字型一起散布，見 `public/fonts/LICENSE-Noto-Sans-TC.txt`。
 
-- [ ] 發票 PDF 中所有中文正確顯示
-- [ ] 全形冒號「：」正確顯示
-- [ ] 日期和單號格式正確
-- [ ] 公司名稱、地址等資訊正確
-- [ ] 銀行資訊正確
-- [ ] PDF 生成速度明顯提升
-- [ ] 開發環境測試通過
-- [ ] Electron 打包版本測試通過
+字型內部名稱顯示為 "Noto Sans TC Thin" —— 這是上游 fontsource 的命名方式，
+`usWeightClass` 仍正確是 400 / 700，不影響輸出。
 
-### 11. 故障排除
+## 故障排除
 
-#### 問題：字型未載入
-**解決**：
-1. 檢查 `public/fonts/` 目錄中優化字型是否存在
-2. 清除瀏覽器快取
-3. 重新啟動開發伺服器
+**PDF 生成失敗**：先看瀏覽器 console。若堆疊指向 `embed` / `encode`，
+八成是字型格式問題 —— 確認 `pdf-fonts.ts` 指到的是 `.woff`。
 
-#### 問題：部分字符顯示為方框
-**解決**：
-1. 檢查缺失的字符
-2. 將字符加入 `scripts/generate-font-subset.js`
-3. 重新生成字型
+**某些字變成空白**：字型缺字。把該字元加進 `scripts/build-pdf-fonts.py`
+的 `REQUIRED` 範圍後重新產生，並在 `src/lib/pdf-fonts.test.ts` 的
+`REQUIRED_TEXT` 補上，避免以後又被切掉。
 
-#### 問題：PDF 生成失敗
-**解決**：
-1. 檢查瀏覽器控制台錯誤訊息
-2. 確認字型檔案路徑正確
-3. 檢查 `src/lib/pdf-fonts.ts` 配置
+## 歷史
 
-## 總結
-
-通過使用自訂字型子集，我們成功：
-- ✅ 解決了中文字符顯示問題（包括全形標點）
-- ✅ 將字型大小縮減 **81%**
-- ✅ 提升 PDF 生成速度 **3-5 倍**
-- ✅ 支援離線使用
-- ✅ 保持完整的專案所需字符覆蓋
-
-這是一個在檔案體積、效能和功能之間取得最佳平衡的解決方案。
+2026-08 之前，本目錄記載的是一套「子集化成 WOFF2」的流程，宣稱已解決
+全形冒號問題。實測不成立：當時產出的 woff2 並不含 U+FF1A，而且 WOFF2
+本身就會讓 PDF 產不出來。相關腳本
+（`generate-font-subset.js`、`optimize-fonts.ps1`、`Update-PdfFontConfig.ps1`）
+已移除，以免有人照著跑再把設定改回 WOFF2。

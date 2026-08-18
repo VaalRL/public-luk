@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import { withErrorHandling, type ActionResult } from "@/lib/action-wrapper";
 import { syncInvoiceBalance } from "@/lib/invoice-balance";
 import { invoiceTotal } from "@/lib/invoice-total";
+import { getPdfTemplate } from "@/app/actions/pdf-template";
 import type { InvoiceItem } from "@/lib/validations/invoice";
 
 export async function getInvoices() {
@@ -123,7 +124,9 @@ export async function createInvoice(rawData: unknown): Promise<ActionResult<Invo
                     totalAmount,
                     items: JSON.stringify(data.items),
                     invoiceNumber: invoiceNumber,
-                    title: data.title || "報價單",
+                    // 沒指定標題時採用版型設定裡的預設標題，
+                    // 不要寫死 —— 設定頁改了「預設標題」就是要在這裡生效
+                    title: data.title || (await getPdfTemplate()).labels.documentTitle,
                     issueInvoice: data.issueInvoice ?? true,
                     status: "unpaid",
                     paidAmount: 0,

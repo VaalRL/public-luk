@@ -1,15 +1,17 @@
 import { getCompanies } from "@/app/actions/company";
 import { getInvoices } from "@/app/actions/invoice";
 import { getInvoiceItemTemplates } from "@/app/actions/invoice-item-template";
+import { getPdfTemplate } from "@/app/actions/pdf-template";
 import { InvoicingPageClient } from "@/components/invoicing-page-client";
 
 export const dynamic = 'force-dynamic';
 
 export default async function InvoicingPage() {
-    const [companies, invoices, itemTemplates] = await Promise.all([
+    const [companies, invoices, itemTemplates, pdfTemplate] = await Promise.all([
         getCompanies(),
         getInvoices(),
         getInvoiceItemTemplates(),
+        getPdfTemplate(),
     ]);
 
     return (
@@ -21,7 +23,12 @@ export default async function InvoicingPage() {
                 </p>
             </div>
 
-            <InvoicingPageClient companies={companies} invoices={invoices} itemTemplates={itemTemplates} />
+            <InvoicingPageClient
+                companies={companies}
+                invoices={invoices}
+                itemTemplates={itemTemplates}
+                defaultTitle={pdfTemplate.labels.documentTitle}
+            />
         </div>
     );
 }
