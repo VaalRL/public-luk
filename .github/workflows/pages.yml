@@ -29,7 +29,11 @@ jobs:
       - uses: actions/checkout@v4
 
       # 網站是純靜態檔案，不需要建置步驟
+      # enablement: 倉庫還沒開啟 Pages 時，由這一步用 pages: write 權限自動開啟，
+      # 省去手動到 Settings → Pages 設定；已開啟時這個參數不會有任何作用
       - uses: actions/configure-pages@v5
+        with:
+          enablement: true
       - uses: actions/upload-pages-artifact@v3
         with:
           path: website
