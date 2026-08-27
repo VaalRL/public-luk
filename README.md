@@ -1,6 +1,10 @@
-# Spreadsheet Comparator - 智慧對帳系統
+# Luk — 從開報價單到對帳
 
-一個專為小公司設計的內部對帳工具，自動化「報價/立帳」與「銀行對帳」流程。
+一個專為小公司設計的內部工具，把一整條應收流程接起來：
+開報價單、自動算稅、產生 PDF 並立帳，收款時讀取銀行明細，
+依匯款帳號後五碼認出客戶並自動沖銷未結帳款。
+
+網站：<https://vaalrl.github.io/public-luk/>（[中文](https://vaalrl.github.io/public-luk/zh.html)）
 
 > [!WARNING]
 > **本專案沒有任何身分驗證機制，僅供單機使用。**

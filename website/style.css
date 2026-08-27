@@ -121,7 +121,9 @@ p{margin:0}
   padding:.34rem .5rem;line-height:1.5;
 }
 .masthead nav a.lang:hover{color:var(--ink);border-color:var(--ink)}
-@media (max-width:44rem){.nav-hide{display:none}}
+/* 窄螢幕收掉次要文字：品牌後綴在英文版比中文版長，
+   留著會把主題切換按鈕擠出畫面外 */
+@media (max-width:44rem){.nav-hide,.brand .ver{display:none}}
 
 /* ---- theme switch ---- */
 .theme{

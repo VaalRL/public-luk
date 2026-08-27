@@ -1,0 +1,351 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Luk — 從開報價單到對帳</title>
+<meta name="description" content="開報價單、算稅、產生 PDF 並立帳；收款時讀取銀行明細，依匯款帳號後五碼認出客戶，自動沖銷未結帳款。給小公司的開源開單與對帳工具。">
+<meta property="og:title" content="Luk — 從開報價單到對帳">
+<meta property="og:description" content="開單、立帳、收款、對帳，一條線走完。開源、單機、MIT 授權。">
+<meta property="og:type" content="website">
+<link rel="icon" href="img/logo.png">
+<link rel="alternate" hreflang="en" href="./index.html">
+<link rel="alternate" hreflang="zh-Hant" href="./zh.html">
+<link rel="alternate" hreflang="x-default" href="./index.html">
+<script>
+  // 在首次繪製前套用主題，避免閃爍。
+  // 沒有存過偏好時預設淺色；存了 "system" 才跟隨作業系統。
+  try{
+    var t=localStorage.getItem("luk-theme");
+    if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t);
+    else if(t!=="system") document.documentElement.setAttribute("data-theme","light");
+  }catch(e){ document.documentElement.setAttribute("data-theme","light"); }
+</script>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="masthead">
+  <div class="wrap">
+    <a class="brand" href="#top"><span class="mark">Luk</span><span class="ver">開單到對帳</span></a>
+    <nav>
+      <a class="nav-hide" href="#how">運作方式</a>
+      <a class="nav-hide" href="#principle">原理</a>
+      <a class="nav-hide" href="#screens">畫面</a>
+      <a class="nav-hide" href="#limits">使用前提</a>
+      <a class="repo" href="https://github.com/VaalRL/public-luk">GitHub ↗</a>
+      <a class="lang" href="index.html" hreflang="en" lang="en">English</a>
+      <div class="theme" role="group" aria-label="色彩主題">
+        <button type="button" data-set="system">系統</button>
+        <button type="button" data-set="light">亮</button>
+        <button type="button" data-set="dark">暗</button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+
+  <div class="hero wrap">
+    <div class="hero-grid">
+      <div class="hero-copy">
+        <p class="eyebrow">開源工具 · 單機執行 · MIT 授權</p>
+        <h1>從開出報價單，<br>到錢真的收到。</h1>
+        <p class="lead">
+          Luk 幫你開報價單、自動算稅、產生 PDF，同時把應收帳款立起來；
+          收款時讀取銀行明細，依匯款帳號後五碼認出是哪一家客戶，
+          再用先進先出沖銷未結帳款。一整條應收流程在同一個工具裡，
+          不用再靠一疊 Word 檔加一張 Excel 表。
+        </p>
+        <div class="cta-row">
+          <a class="btn btn-primary" href="https://github.com/VaalRL/public-luk">前往 GitHub</a>
+          <a class="btn btn-ghost" href="#how">看它怎麼運作</a>
+        </div>
+      </div>
+
+      <!-- 這張帳頁是後半段的核心邏輯：開出去的帳怎麼被收回來 -->
+      <div class="ledger" role="img"
+           aria-label="示範：8 月 14 日一筆 95,550 元入帳，摘要含後五碼 12345，對應到晴光科技的未結帳單 DEMO20260804#01，金額相同，自動沖銷完成。">
+        <div class="ledger-head">
+          <p class="eyebrow">自動銷帳</p>
+          <p class="eyebrow">2026 / 08</p>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">銀行明細</p>
+          <div class="row">
+            <span class="date">08/14</span>
+            <span class="what">
+              <span class="name">匯款</span>
+              <span class="memo">ATM轉入 <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="ledger-side">
+          <p class="eyebrow" style="margin-bottom:.5rem">你開出去的帳單</p>
+          <div class="row">
+            <span class="date">08/04</span>
+            <span class="what">
+              <span class="name">晴光科技股份有限公司</span>
+              <span class="memo">DEMO20260804#01 · 後五碼 <span class="key">12345</span></span>
+            </span>
+            <span class="amt">95,550</span>
+          </div>
+        </div>
+
+        <div class="match">
+          <span class="verdict">已沖銷</span>
+          <span class="bar" aria-hidden="true"></span>
+          <span class="tag tag-settled">結清</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <section id="why">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">為什麼做這個</p>
+        <h2>一筆應收帳款，斷在兩個地方</h2>
+        <p class="lead">開單跟收款通常是兩套互不相干的習慣：一邊是 Word 檔，一邊是銀行明細，中間只靠某個人的記憶連著。</p>
+      </div>
+      <dl class="pains">
+        <div class="pain">
+          <dt>報價單每次重打一遍</dt>
+          <dd>複製上個月的檔案改數字、手動編單號、自己算 5% 稅、再匯出 PDF。每次十分鐘，而且打錯只差一個鍵。</dd>
+        </div>
+        <div class="pain">
+          <dt>單開出去就沒人追了</dt>
+          <dd>文件寄出去，應收帳款落在 Excel 裡 —— 前提是有人記得補上去。誰還欠多少、欠多久，工具答不出來。</dd>
+        </div>
+        <div class="pain">
+          <dt>收款只有後五碼可以認</dt>
+          <dd>明細摘要是「ATM轉入 12345」，要先查出這組後五碼屬於哪家公司；客戶又常常一次匯一筆整數，得自己拆開沖銷多張單，還要記得剩下的餘額。</dd>
+        </div>
+      </dl>
+    </div>
+  </section>
+
+  <section id="how">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">運作方式</p>
+        <h2>四個步驟，從報價單到結清</h2>
+      </div>
+      <div class="steps">
+        <div class="step">
+          <h3>開報價單</h3>
+          <p>選客戶、套用存好的常用品項，單號、5% 營業稅與各項合計自動算好。PDF 的版型 —— 欄位名稱、紙張大小、簽章欄、附註 —— 都可以在設定頁調成你公司的樣子，設定一次就好。</p>
+        </div>
+        <div class="step">
+          <h3>出單同時立帳</h3>
+          <p>產生 PDF 的同時就記下這筆錢是誰欠的、從哪一天起算。每份文件自動歸檔備份，也可以掛上提醒，之後要催款有依據。</p>
+        </div>
+        <div class="step">
+          <h3>上傳銀行明細</h3>
+          <p>直接丟銀行匯出的 Excel。第一次使用時用對應畫面指定哪一欄是日期、金額、摘要，之後存成模板重複套用。</p>
+        </div>
+        <div class="step">
+          <h3>自動沖銷，月結留痕</h3>
+          <p>從摘要抽出後五碼認出客戶，再依帳單日期先進先出沖銷；多收的錢自動轉為該客戶的溢繳額度，下期直接扣抵。月結只把該期交易標記為已結，不刪除任何憑證，事後要追「這筆錢當初怎麼認的」記錄都還在。</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="principle">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">原理</p>
+        <h2>錢怎麼被分配到每一張單</h2>
+        <p class="lead">
+          以下兩個例子的數字，是把情境丟進實際的對帳程式跑出來的結果，不是示意。
+        </p>
+      </div>
+
+      <div class="cases">
+
+        <div class="case">
+          <div class="case-intro">
+            <b>一筆錢付好幾張單</b>
+            <span>甲公司匯來 200,000，名下有三張未結帳單。系統依帳單日期由舊到新（先進先出）逐張沖銷。</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="alloc">
+              <caption>06/20 入帳 200,000 · 摘要 ATM轉入 11111</caption>
+              <thead>
+                <tr><th>帳單</th><th>日期</th><th class="n">應收</th><th class="n">本次沖銷</th><th>結果</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>A-001</td><td class="n">05/02</td><td class="n">84,000</td><td class="n give">84,000</td><td><span class="state ok">結清</span></td></tr>
+                <tr><td>A-002</td><td class="n">05/18</td><td class="n">63,000</td><td class="n give">63,000</td><td><span class="state ok">結清</span></td></tr>
+                <tr><td>A-003</td><td class="n">06/04</td><td class="n">91,000</td><td class="n give">53,000</td><td><span class="state part">部分</span></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3">已分配</td><td class="n">200,000</td><td></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="verdict-note">
+            <span><b>最舊的先收。</b>200,000 剛好用完，最新的 A-003 只收到一部分，還欠 38,000 會留在未結清單裡繼續等。
+            如果匯進來的錢比全部應收還多，多的部分不會亂塞，而是轉成這家公司的溢繳額度，下期自動扣抵。</span>
+          </p>
+        </div>
+
+        <div class="case">
+          <div class="case-intro">
+            <b>認不出是誰付的</b>
+            <span>乙公司與丙公司登記了相同的後五碼 22222，兩邊都剛好有一張 50,000 未結。這時候後五碼不足以判斷。</span>
+          </div>
+          <div style="overflow-x:auto">
+            <table class="alloc">
+              <caption>06/21 入帳 50,000 · 摘要 ATM轉入 22222</caption>
+              <thead>
+                <tr><th>候選公司</th><th>帳單</th><th class="n">應收</th><th class="n">本次沖銷</th><th>結果</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>乙公司</td><td>B-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">未動</span></td></tr>
+                <tr><td>丙公司</td><td>C-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">未動</span></td></tr>
+              </tbody>
+              <tfoot>
+                <tr><td colspan="3">已分配</td><td class="n">0</td><td><span class="state hold">待確認</span></td></tr>
+              </tfoot>
+            </table>
+          </div>
+          <p class="verdict-note warn">
+            <span><b>不確定就不猜。</b>這筆入帳會被標記為「待確認」，兩家公司的帳都不動，交給你判斷。
+            寧可留一筆待辦，也不要讓錯的公司被記成已付款 —— 帳一旦記錯，追回來的成本遠高於當下多看一眼。</span>
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <section id="screens">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">實際畫面</p>
+        <h2>一整圈走完，就這三個畫面</h2>
+        <p class="lead">以下畫面使用虛構的示範資料；介面可切換中文或英文。</p>
+      </div>
+      <div class="shots">
+        <figure>
+          <img src="img/invoicing.png" width="2400" height="1250" loading="lazy"
+               alt="立帳管理畫面：帳單列表顯示公司、單號、日期、金額與付款狀態。">
+          <figcaption>
+            <b>立帳管理 —— 起點</b>
+            <span>開報價單，單號自動編、稅自動算、PDF 一鍵產生，同一個動作就把應收帳款記進系統，等著被沖銷，而不是等人想起來。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/reconciliation.png" width="2400" height="1300" loading="lazy"
+               alt="銷帳作業畫面：上方列出銀行明細的三筆入帳與後五碼，下方列出未結帳單與未付金額，右上角有執行自動銷帳按鈕。">
+          <figcaption>
+            <b>銷帳作業 —— 終點</b>
+            <span>上面是銀行進來的錢，下面是還沒收到的帳。按下「執行自動銷帳」，兩邊自己對上；認不出來的會留著等你判斷，不會亂猜。</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/dashboard.png" width="2400" height="1350" loading="lazy"
+               alt="概覽畫面：本月應收、本月實收、未銷帳等 KPI 卡片，近六個月營收趨勢長條圖，以及待辦事項清單。">
+          <figcaption>
+            <b>概覽 —— 中間的缺口</b>
+            <span>本月應收與實收、還沒收回來的金額，以及近六個月的趨勢。待辦提醒直接掛在旁邊。</span>
+          </figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section id="limits">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">使用前提</p>
+        <h2>先說清楚它不是什麼</h2>
+        <p class="lead">這是一個小公司內部用的單機工具，不是 SaaS。裝之前請確認這些條件你能接受。</p>
+      </div>
+      <div class="limits">
+        <div class="limit">
+          <span class="mark">無帳號</span>
+          <div>
+            <b>沒有登入機制</b>
+            <p>任何能連到這個服務的人都能看到全部帳務，也能刪除資料。請只在自己的電腦上執行，不要放到公開網路。</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">單機</span>
+          <div>
+            <b>資料存在本機的 SQLite</b>
+            <p>沒有雲端同步，也沒有多人協作。換電腦要自己搬檔案，請自行安排定期備份。</p>
+          </div>
+        </div>
+        <div class="limit">
+          <span class="mark">台灣</span>
+          <div>
+            <b>針對台灣的習慣設計</b>
+            <p>對帳邏輯建立在「虛擬帳號後五碼」這個前提上，報價單預設新台幣與 5% 營業稅。介面可切換中文或英文，但產生的文件是照台灣的使用習慣排版。</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="start">
+    <div class="wrap">
+      <div class="sec-head">
+        <p class="eyebrow">開始使用</p>
+        <h2>從原始碼跑起來</h2>
+      </div>
+      <div class="start-grid">
+        <div>
+<pre><code><span class="c"># 取得原始碼</span>
+git clone https://github.com/VaalRL/public-luk
+cd public-luk
+
+<span class="c"># 安裝與建立資料庫</span>
+npm install
+npx prisma migrate deploy
+
+<span class="c"># 啟動，開 http://localhost:3001</span>
+npm run dev</code></pre>
+        </div>
+        <div>
+          <ul class="reqs">
+            <li><span>執行環境</span><span>Node.js 20+</span></li>
+            <li><span>資料庫</span><span>SQLite（內建）</span></li>
+            <li><span>桌面版打包</span><span>electron-builder</span></li>
+            <li><span>授權</span><span>MIT</span></li>
+          </ul>
+          <p style="margin-top:1.15rem;color:var(--muted);font-size:.9rem;max-width:var(--measure)">
+            <code style="font-family:var(--mono);font-size:.85rem">xlsx</code> 相依套件指向 SheetJS 官方 CDN 而非 npm registry，
+            這是刻意的 —— registry 上的版本停在 2022 年且缺少後續的安全性修復。
+            若你的網路擋住該網域，請先設定 proxy。
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="wrap foot-grid">
+    <div>
+      <p><strong style="color:var(--ink)">Luk</strong> — 給小公司的開源開單與對帳工具</p>
+      <p style="font-family:var(--mono);font-size:.78rem">MIT License · 介面字型 Noto Sans TC（SIL OFL 1.1）</p>
+    </div>
+    <div class="foot-links">
+      <a href="https://github.com/VaalRL/public-luk">原始碼</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/CONTRIBUTING.md">貢獻指南</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/LICENSE">授權條款</a>
+      <a href="https://github.com/VaalRL/public-luk/issues">回報問題</a>
+    </div>
+  </div>
+</footer>
+
+<script src="theme.js" defer></script>
+</body>
+</html>

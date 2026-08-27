@@ -1,24 +1,25 @@
 <!doctype html>
-<html lang="zh-Hant">
+<html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Luk 對帳工具</title>
-<meta name="description" content="讀取銀行明細，依匯款帳號後五碼認出客戶，自動沖銷未結帳款。給小公司的開源對帳工具。">
-<meta property="og:title" content="Luk 對帳工具">
-<meta property="og:description" content="銀行入帳與應收帳款，自動對上。開源、單機、MIT 授權。">
+<title>Luk — From Quotation to Settled</title>
+<meta name="description" content="Issue quotations as PDFs, book the receivable, then let the bank statement settle it — the payer identified by the last five digits of the transfer account. Open-source billing and reconciliation for small companies.">
+<meta property="og:title" content="Luk — From Quotation to Settled">
+<meta property="og:description" content="Quote, bill, get paid, reconcile — one tool for the whole receivable. Open source, runs locally, MIT licensed.">
 <meta property="og:type" content="website">
 <link rel="icon" href="img/logo.png">
-<link rel="alternate" hreflang="zh-Hant" href="./index.html">
-<link rel="alternate" hreflang="en" href="./en.html">
+<link rel="alternate" hreflang="en" href="./index.html">
+<link rel="alternate" hreflang="zh-Hant" href="./zh.html">
 <link rel="alternate" hreflang="x-default" href="./index.html">
 <script>
-  // 在首次繪製前套用偏好，避免主題閃爍。
-  // 值為 "light" / "dark" 時寫入 data-theme；沒有值代表跟隨系統。
+  // 在首次繪製前套用主題，避免閃爍。
+  // 沒有存過偏好時預設淺色；存了 "system" 才跟隨作業系統。
   try{
     var t=localStorage.getItem("luk-theme");
     if(t==="light"||t==="dark") document.documentElement.setAttribute("data-theme",t);
-  }catch(e){}
+    else if(t!=="system") document.documentElement.setAttribute("data-theme","light");
+  }catch(e){ document.documentElement.setAttribute("data-theme","light"); }
 </script>
 <link rel="stylesheet" href="style.css">
 </head>
@@ -26,18 +27,18 @@
 
 <header class="masthead">
   <div class="wrap">
-    <a class="brand" href="#top"><span class="mark">Luk</span><span class="ver">對帳工具</span></a>
+    <a class="brand" href="#top"><span class="mark">Luk</span><span class="ver">quote → settled</span></a>
     <nav>
-      <a class="nav-hide" href="#how">運作方式</a>
-      <a class="nav-hide" href="#principle">原理</a>
-      <a class="nav-hide" href="#screens">畫面</a>
-      <a class="nav-hide" href="#limits">使用前提</a>
+      <a class="nav-hide" href="#how">How it works</a>
+      <a class="nav-hide" href="#principle">Principle</a>
+      <a class="nav-hide" href="#screens">Screens</a>
+      <a class="nav-hide" href="#limits">Before you start</a>
       <a class="repo" href="https://github.com/VaalRL/public-luk">GitHub ↗</a>
-      <a class="lang" href="en.html" hreflang="en" lang="en">English</a>
-      <div class="theme" role="group" aria-label="色彩主題">
-        <button type="button" data-set="system">系統</button>
-        <button type="button" data-set="light">亮</button>
-        <button type="button" data-set="dark">暗</button>
+      <a class="lang" href="zh.html" hreflang="zh-Hant" lang="zh-Hant">中文</a>
+      <div class="theme" role="group" aria-label="Color theme">
+        <button type="button" data-set="system">Auto</button>
+        <button type="button" data-set="light">Light</button>
+        <button type="button" data-set="dark">Dark</button>
       </div>
     </nav>
   </div>
@@ -48,54 +49,56 @@
   <div class="hero wrap">
     <div class="hero-grid">
       <div class="hero-copy">
-        <p class="eyebrow">開源工具 · 單機執行 · MIT 授權</p>
-        <h1>銀行入帳與應收帳款，<br>自動對上。</h1>
+        <p class="eyebrow">Open source · Runs locally · MIT</p>
+        <h1>From the quotation<br>to the money landing.</h1>
         <p class="lead">
-          Luk 讀取你的銀行明細，依匯款帳號後五碼認出是哪一家客戶，
-          再用先進先出沖銷未結帳款。原本要開兩個視窗逐筆比對的下午，變成按一次按鈕。
+          Luk issues the quotation, calculates the tax, produces the PDF and books the receivable.
+          When the payment arrives, it reads your bank statement, identifies the customer from the
+          last five digits of the transfer account, and settles the open invoices oldest-first.
+          One tool for the whole receivable, instead of a folder of Word files and a spreadsheet.
         </p>
         <div class="cta-row">
-          <a class="btn btn-primary" href="https://github.com/VaalRL/public-luk">前往 GitHub</a>
-          <a class="btn btn-ghost" href="#how">看它怎麼運作</a>
+          <a class="btn btn-primary" href="https://github.com/VaalRL/public-luk">View on GitHub</a>
+          <a class="btn btn-ghost" href="#how">See how it works</a>
         </div>
       </div>
 
-      <!-- 這張帳頁就是產品本身的邏輯 -->
+      <!-- 這張帳頁是後半段的核心邏輯：開出去的帳怎麼被收回來 -->
       <div class="ledger" role="img"
-           aria-label="示範：8 月 14 日一筆 95,550 元入帳，摘要含後五碼 12345，對應到晴光科技的未結帳單 DEMO20260804#01，金額相同，自動沖銷完成。">
+           aria-label="Example: a payment of 95,550 received on August 14, its memo containing the last five digits 12345, matched to Qingguang Technology's open invoice DEMO20260804#01 for the same amount, settled automatically.">
         <div class="ledger-head">
-          <p class="eyebrow">自動銷帳</p>
+          <p class="eyebrow">Auto-settled</p>
           <p class="eyebrow">2026 / 08</p>
         </div>
 
         <div class="ledger-side">
-          <p class="eyebrow" style="margin-bottom:.5rem">銀行明細</p>
+          <p class="eyebrow" style="margin-bottom:.5rem">Bank statement</p>
           <div class="row">
             <span class="date">08/14</span>
             <span class="what">
-              <span class="name">匯款</span>
-              <span class="memo">ATM轉入 <span class="key">12345</span></span>
+              <span class="name">Transfer in</span>
+              <span class="memo">ATM DEPOSIT <span class="key">12345</span></span>
             </span>
             <span class="amt">95,550</span>
           </div>
         </div>
 
         <div class="ledger-side">
-          <p class="eyebrow" style="margin-bottom:.5rem">未結帳單</p>
+          <p class="eyebrow" style="margin-bottom:.5rem">Invoice you issued</p>
           <div class="row">
             <span class="date">08/04</span>
             <span class="what">
-              <span class="name">晴光科技股份有限公司</span>
-              <span class="memo">DEMO20260804#01 · 後五碼 <span class="key">12345</span></span>
+              <span class="name">Qingguang Technology Co., Ltd.</span>
+              <span class="memo">DEMO20260804#01 · last 5 <span class="key">12345</span></span>
             </span>
             <span class="amt">95,550</span>
           </div>
         </div>
 
         <div class="match">
-          <span class="verdict">已沖銷</span>
+          <span class="verdict">Settled</span>
           <span class="bar" aria-hidden="true"></span>
-          <span class="tag tag-settled">結清</span>
+          <span class="tag tag-settled">Paid</span>
         </div>
       </div>
     </div>
@@ -104,22 +107,22 @@
   <section id="why">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">為什麼做這個</p>
-        <h2>小公司的對帳，卡在同一個地方</h2>
-        <p class="lead">收款用虛擬帳號，銀行明細上只留下後五碼。客戶不會告訴你這筆錢付的是哪一張單。</p>
+        <p class="eyebrow">Why this exists</p>
+        <h2>A receivable breaks in two places, and neither has an owner</h2>
+        <p class="lead">Issuing the document and collecting the money are usually two unrelated habits: a Word file on one side, a bank statement on the other. Nothing connects them except somebody's memory.</p>
       </div>
       <dl class="pains">
         <div class="pain">
-          <dt>只有後五碼可以認人</dt>
-          <dd>明細摘要是「ATM轉入 12345」，要先查出這組後五碼屬於哪家公司，才知道這筆錢是誰付的。</dd>
+          <dt>Every quotation retyped</dt>
+          <dd>Copy last month's file, change the numbers, renumber it by hand, work out the 5% tax, export a PDF. Ten minutes each time, and a typo is always one keystroke away.</dd>
         </div>
         <div class="pain">
-          <dt>一筆錢可能付好幾張單</dt>
-          <dd>客戶常常一次匯一筆整數，要自己拆開沖銷多張未結帳單，還得記得剩下的餘額。</dd>
+          <dt>Once issued, nothing tracks it</dt>
+          <dd>The document goes out and the receivable lands in a spreadsheet — if someone remembers to add it. Who still owes what, and since when, is not a question the tool can answer.</dd>
         </div>
         <div class="pain">
-          <dt>金額對不上就要翻舊帳</dt>
-          <dd>多收的錢要留到下個月，少收的要追。這些狀態散在 Excel 和記憶裡，換人接手就斷了。</dd>
+          <dt>Five digits are all you get</dt>
+          <dd>The memo reads “ATM DEPOSIT 12345”. You look up which company owns that number, then split one round payment across several open invoices and remember whatever is left over.</dd>
         </div>
       </dl>
     </div>
@@ -128,21 +131,25 @@
   <section id="how">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">運作方式</p>
-        <h2>三個步驟，從明細到結清</h2>
+        <p class="eyebrow">How it works</p>
+        <h2>Four steps, from quotation to settled</h2>
       </div>
       <div class="steps">
         <div class="step">
-          <h3>上傳銀行明細</h3>
-          <p>直接丟銀行匯出的 Excel。第一次使用時用對應畫面指定哪一欄是日期、金額、摘要，之後存成模板重複套用。</p>
+          <h3>Write the quotation</h3>
+          <p>Pick the customer, pull in saved line items, and the numbering, the 5% business tax and the totals are worked out for you. The layout of the PDF — labels, paper size, signature block, footer note — is yours to configure once.</p>
         </div>
         <div class="step">
-          <h3>自動歸戶與沖銷</h3>
-          <p>從摘要抽出後五碼認出客戶，再依帳單日期先進先出沖銷。多收的錢自動轉為該客戶的溢繳額度，下期可直接扣抵。</p>
+          <h3>Issue it and book the receivable</h3>
+          <p>Producing the PDF also records what is owed, by whom, and from what date. Every document is archived automatically, and you can attach reminders to chase it later.</p>
         </div>
         <div class="step">
-          <h3>月結留痕，不刪憑證</h3>
-          <p>月結只把該期交易標記為已結，不刪除任何憑證。事後要追「這筆錢當初怎麼認的」，記錄都還在。</p>
+          <h3>Upload the bank statement</h3>
+          <p>Drop in the Excel file your bank exports. The first time, you map which column holds the date, the amount and the memo; save it as a template and reuse it after that.</p>
+        </div>
+        <div class="step">
+          <h3>Settle automatically, close without deleting</h3>
+          <p>The last five digits identify the customer, then open invoices are settled oldest-first; anything overpaid becomes credit applied next period. Closing a month marks its transactions as closed — it deletes no records, so how a payment was attributed can still be traced.</p>
         </div>
       </div>
     </div>
@@ -151,10 +158,11 @@
   <section id="principle">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">原理</p>
-        <h2>錢怎麼被分配到每一張單</h2>
+        <p class="eyebrow">Principle</p>
+        <h2>How money gets allocated across invoices</h2>
         <p class="lead">
-          以下兩個例子的數字，是把情境丟進實際的對帳程式跑出來的結果，不是示意。
+          The numbers in the two examples below come from running those scenarios through the actual
+          matching engine. They are not illustrations.
         </p>
       </div>
 
@@ -162,54 +170,56 @@
 
         <div class="case">
           <div class="case-intro">
-            <b>一筆錢付好幾張單</b>
-            <span>甲公司匯來 200,000，名下有三張未結帳單。系統依帳單日期由舊到新（先進先出）逐張沖銷。</span>
+            <b>One payment across several invoices</b>
+            <span>Company A sends 200,000 and has three open invoices. Luk settles them by invoice date, oldest first.</span>
           </div>
           <div style="overflow-x:auto">
             <table class="alloc">
-              <caption>06/20 入帳 200,000 · 摘要 ATM轉入 11111</caption>
+              <caption>06/20 · received 200,000 · memo ATM DEPOSIT 11111</caption>
               <thead>
-                <tr><th>帳單</th><th>日期</th><th class="n">應收</th><th class="n">本次沖銷</th><th>結果</th></tr>
+                <tr><th>Invoice</th><th>Date</th><th class="n">Due</th><th class="n">Applied</th><th>Result</th></tr>
               </thead>
               <tbody>
-                <tr><td>A-001</td><td class="n">05/02</td><td class="n">84,000</td><td class="n give">84,000</td><td><span class="state ok">結清</span></td></tr>
-                <tr><td>A-002</td><td class="n">05/18</td><td class="n">63,000</td><td class="n give">63,000</td><td><span class="state ok">結清</span></td></tr>
-                <tr><td>A-003</td><td class="n">06/04</td><td class="n">91,000</td><td class="n give">53,000</td><td><span class="state part">部分</span></td></tr>
+                <tr><td>A-001</td><td class="n">05/02</td><td class="n">84,000</td><td class="n give">84,000</td><td><span class="state ok">Paid</span></td></tr>
+                <tr><td>A-002</td><td class="n">05/18</td><td class="n">63,000</td><td class="n give">63,000</td><td><span class="state ok">Paid</span></td></tr>
+                <tr><td>A-003</td><td class="n">06/04</td><td class="n">91,000</td><td class="n give">53,000</td><td><span class="state part">Partial</span></td></tr>
               </tbody>
               <tfoot>
-                <tr><td colspan="3">已分配</td><td class="n">200,000</td><td></td></tr>
+                <tr><td colspan="3">Allocated</td><td class="n">200,000</td><td></td></tr>
               </tfoot>
             </table>
           </div>
           <p class="verdict-note">
-            <span><b>最舊的先收。</b>200,000 剛好用完，最新的 A-003 只收到一部分，還欠 38,000 會留在未結清單裡繼續等。
-            如果匯進來的錢比全部應收還多，多的部分不會亂塞，而是轉成這家公司的溢繳額度，下期自動扣抵。</span>
+            <span><b>Oldest gets paid first.</b> The 200,000 runs out exactly; the newest invoice A-003 is only
+            partly covered and the remaining 38,000 stays open. If a payment exceeds everything outstanding,
+            the excess is not forced onto an invoice — it becomes credit for that company and is applied next period.</span>
           </p>
         </div>
 
         <div class="case">
           <div class="case-intro">
-            <b>認不出是誰付的</b>
-            <span>乙公司與丙公司登記了相同的後五碼 22222，兩邊都剛好有一張 50,000 未結。這時候後五碼不足以判斷。</span>
+            <b>When the payer cannot be identified</b>
+            <span>Company B and Company C both registered the same last five digits, 22222, and each has one open invoice for 50,000. Five digits are no longer enough to decide.</span>
           </div>
           <div style="overflow-x:auto">
             <table class="alloc">
-              <caption>06/21 入帳 50,000 · 摘要 ATM轉入 22222</caption>
+              <caption>06/21 · received 50,000 · memo ATM DEPOSIT 22222</caption>
               <thead>
-                <tr><th>候選公司</th><th>帳單</th><th class="n">應收</th><th class="n">本次沖銷</th><th>結果</th></tr>
+                <tr><th>Candidate</th><th>Invoice</th><th class="n">Due</th><th class="n">Applied</th><th>Result</th></tr>
               </thead>
               <tbody>
-                <tr><td>乙公司</td><td>B-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">未動</span></td></tr>
-                <tr><td>丙公司</td><td>C-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">未動</span></td></tr>
+                <tr><td>Company B</td><td>B-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">Untouched</span></td></tr>
+                <tr><td>Company C</td><td>C-001</td><td class="n">50,000</td><td class="n">0</td><td><span class="state hold">Untouched</span></td></tr>
               </tbody>
               <tfoot>
-                <tr><td colspan="3">已分配</td><td class="n">0</td><td><span class="state hold">待確認</span></td></tr>
+                <tr><td colspan="3">Allocated</td><td class="n">0</td><td><span class="state hold">Needs review</span></td></tr>
               </tfoot>
             </table>
           </div>
           <p class="verdict-note warn">
-            <span><b>不確定就不猜。</b>這筆入帳會被標記為「待確認」，兩家公司的帳都不動，交給你判斷。
-            寧可留一筆待辦，也不要讓錯的公司被記成已付款 —— 帳一旦記錯，追回來的成本遠高於當下多看一眼。</span>
+            <span><b>When unsure, it does not guess.</b> The payment is flagged for review, neither company's
+            ledger moves, and the decision is left to you. A pending task is cheaper than a wrong one —
+            once a payment is booked against the wrong company, undoing it costs far more than a second look.</span>
           </p>
         </div>
 
@@ -220,33 +230,33 @@
   <section id="screens">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">實際畫面</p>
-        <h2>看得到帳，也看得到還差多少</h2>
-        <p class="lead">以下畫面使用虛構的示範資料。</p>
+        <p class="eyebrow">Screens</p>
+        <h2>The whole way round, in three screens</h2>
+        <p class="lead">The screens below use fictional demo data and are captured in Traditional Chinese; the interface also runs in English.</p>
       </div>
       <div class="shots">
         <figure>
-          <img src="img/reconciliation.png" width="2400" height="1300" loading="lazy"
-               alt="銷帳作業畫面：上方列出銀行明細的三筆入帳與後五碼，下方列出未結帳單與未付金額，右上角有執行自動銷帳按鈕。">
+          <img src="img/invoicing.png" width="2400" height="1250" loading="lazy"
+               alt="Invoicing screen: an invoice list showing company, number, date, amount and payment status.">
           <figcaption>
-            <b>銷帳作業</b>
-            <span>左邊是銀行進來的錢，下面是還沒收到的帳。按下「執行自動銷帳」，兩邊自己對上；認不出來的會留著等你判斷，不會亂猜。</span>
+            <b>Invoicing — where it starts</b>
+            <span>Write the quotation, let it number itself and calculate the tax, produce the PDF, and the receivable is recorded in the same motion — waiting to be settled rather than waiting to be remembered.</span>
+          </figcaption>
+        </figure>
+        <figure>
+          <img src="img/reconciliation.png" width="2400" height="1300" loading="lazy"
+               alt="Reconciliation screen: three incoming bank transactions with their last five digits at the top, open invoices and unpaid amounts below, and an auto-match button in the upper right.">
+          <figcaption>
+            <b>Reconciliation — where it ends</b>
+            <span>Money in from the bank on one side, invoices still unpaid on the other. Press auto-match and the two sides line themselves up; whatever cannot be identified is left for you rather than guessed.</span>
           </figcaption>
         </figure>
         <figure>
           <img src="img/dashboard.png" width="2400" height="1350" loading="lazy"
-               alt="概覽畫面：本月應收、本月實收、未銷帳等 KPI 卡片，近六個月營收趨勢長條圖，以及待辦事項清單。">
+               alt="Dashboard: KPI cards for receivables and collections this month and outstanding balances, a six-month revenue bar chart, and a to-do list.">
           <figcaption>
-            <b>概覽</b>
-            <span>本月應收與實收、還沒收回來的金額，以及近六個月的趨勢。待辦提醒直接掛在旁邊。</span>
-          </figcaption>
-        </figure>
-        <figure>
-          <img src="img/invoicing.png" width="2400" height="1250" loading="lazy"
-               alt="立帳管理畫面：帳單列表顯示公司、單號、日期、金額與付款狀態。">
-          <figcaption>
-            <b>立帳管理</b>
-            <span>建立報價單與請款單，自動算稅、產生 PDF，並把應收帳款記進來等著被沖銷。</span>
+            <b>Dashboard — the gap between them</b>
+            <span>Billed and collected this month, what is still outstanding, and the six-month trend. Reminders sit right next to them.</span>
           </figcaption>
         </figure>
       </div>
@@ -256,30 +266,30 @@
   <section id="limits">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">使用前提</p>
-        <h2>先說清楚它不是什麼</h2>
-        <p class="lead">這是一個小公司內部用的單機工具，不是 SaaS。裝之前請確認這些條件你能接受。</p>
+        <p class="eyebrow">Before you start</p>
+        <h2>What this is not</h2>
+        <p class="lead">This is an in-house tool for a small company, running on one machine. It is not a SaaS product. Please check you are comfortable with these constraints before installing it.</p>
       </div>
       <div class="limits">
         <div class="limit">
-          <span class="mark">無帳號</span>
+          <span class="mark">No auth</span>
           <div>
-            <b>沒有登入機制</b>
-            <p>任何能連到這個服務的人都能看到全部帳務，也能刪除資料。請只在自己的電腦上執行，不要放到公開網路。</p>
+            <b>There is no login</b>
+            <p>Anyone who can reach the service can see every record and delete data. Run it on your own machine; do not expose it to the public internet.</p>
           </div>
         </div>
         <div class="limit">
-          <span class="mark">單機</span>
+          <span class="mark">Local</span>
           <div>
-            <b>資料存在本機的 SQLite</b>
-            <p>沒有雲端同步，也沒有多人協作。換電腦要自己搬檔案，請自行安排定期備份。</p>
+            <b>Data lives in a local SQLite file</b>
+            <p>No cloud sync, no multi-user collaboration. Moving to another machine means moving the file yourself, and backups are your responsibility.</p>
           </div>
         </div>
         <div class="limit">
-          <span class="mark">台灣</span>
+          <span class="mark">Taiwan</span>
           <div>
-            <b>針對台灣的收款習慣設計</b>
-            <p>對帳邏輯建立在「虛擬帳號後五碼」這個前提上，幣別與稅率預設為新台幣與 5% 營業稅。</p>
+            <b>Built around Taiwanese practice</b>
+            <p>Matching assumes the last five digits of a virtual account number, and quotations default to New Taiwan dollars with 5% business tax. The interface runs in Traditional Chinese or English; the documents it produces are laid out for Taiwanese use.</p>
           </div>
         </div>
       </div>
@@ -289,33 +299,33 @@
   <section id="start">
     <div class="wrap">
       <div class="sec-head">
-        <p class="eyebrow">開始使用</p>
-        <h2>從原始碼跑起來</h2>
+        <p class="eyebrow">Getting started</p>
+        <h2>Run it from source</h2>
       </div>
       <div class="start-grid">
         <div>
-<pre><code><span class="c"># 取得原始碼</span>
+<pre><code><span class="c"># get the source</span>
 git clone https://github.com/VaalRL/public-luk
 cd public-luk
 
-<span class="c"># 安裝與建立資料庫</span>
+<span class="c"># install and create the database</span>
 npm install
 npx prisma migrate deploy
 
-<span class="c"># 啟動，開 http://localhost:3001</span>
+<span class="c"># start, then open http://localhost:3001</span>
 npm run dev</code></pre>
         </div>
         <div>
           <ul class="reqs">
-            <li><span>執行環境</span><span>Node.js 20+</span></li>
-            <li><span>資料庫</span><span>SQLite（內建）</span></li>
-            <li><span>桌面版打包</span><span>electron-builder</span></li>
-            <li><span>授權</span><span>MIT</span></li>
+            <li><span>Runtime</span><span>Node.js 20+</span></li>
+            <li><span>Database</span><span>SQLite (bundled)</span></li>
+            <li><span>Desktop build</span><span>electron-builder</span></li>
+            <li><span>License</span><span>MIT</span></li>
           </ul>
           <p style="margin-top:1.15rem;color:var(--muted);font-size:.9rem;max-width:var(--measure)">
-            <code style="font-family:var(--mono);font-size:.85rem">xlsx</code> 相依套件指向 SheetJS 官方 CDN 而非 npm registry，
-            這是刻意的 —— registry 上的版本停在 2022 年且缺少後續的安全性修復。
-            若你的網路擋住該網域，請先設定 proxy。
+            The <code style="font-family:var(--mono);font-size:.85rem">xlsx</code> dependency points at the
+            official SheetJS CDN rather than the npm registry. That is deliberate — the registry version is
+            frozen at 2022 and misses later security fixes. If your network blocks that domain, configure a proxy first.
           </p>
         </div>
       </div>
@@ -327,14 +337,14 @@ npm run dev</code></pre>
 <footer>
   <div class="wrap foot-grid">
     <div>
-      <p><strong style="color:var(--ink)">Luk</strong> — 給小公司的開源對帳工具</p>
-      <p style="font-family:var(--mono);font-size:.78rem">MIT License · 介面字型 Noto Sans TC（SIL OFL 1.1）</p>
+      <p><strong style="color:var(--ink)">Luk</strong> — open-source billing and reconciliation for small companies</p>
+      <p style="font-family:var(--mono);font-size:.78rem">MIT License · Interface font Noto Sans TC (SIL OFL 1.1)</p>
     </div>
     <div class="foot-links">
-      <a href="https://github.com/VaalRL/public-luk">原始碼</a>
-      <a href="https://github.com/VaalRL/public-luk/blob/main/CONTRIBUTING.md">貢獻指南</a>
-      <a href="https://github.com/VaalRL/public-luk/blob/main/LICENSE">授權條款</a>
-      <a href="https://github.com/VaalRL/public-luk/issues">回報問題</a>
+      <a href="https://github.com/VaalRL/public-luk">Source</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/CONTRIBUTING.md">Contributing</a>
+      <a href="https://github.com/VaalRL/public-luk/blob/main/LICENSE">License</a>
+      <a href="https://github.com/VaalRL/public-luk/issues">Issues</a>
     </div>
   </div>
 </footer>
