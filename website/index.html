@@ -13,6 +13,13 @@
 <link rel="alternate" hreflang="zh-Hant" href="./zh.html">
 <link rel="alternate" hreflang="x-default" href="./index.html">
 <script>
+  // 預設英文；使用者按過「中文」才會存下 "zh"，之後從首頁進來直接轉到中文版。
+  // 只在首頁轉址 —— 直接打開 zh.html 的連結一律照原樣顯示。
+  try{
+    if(localStorage.getItem("luk-lang")==="zh") location.replace("zh.html"+location.search+location.hash);
+  }catch(e){}
+</script>
+<script>
   // 在首次繪製前套用主題，避免閃爍。
   // 沒有存過偏好時預設淺色；存了 "system" 才跟隨作業系統。
   try{

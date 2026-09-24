@@ -17,3 +17,12 @@
   buttons.forEach(function(b){ b.addEventListener("click", function(){ apply(b.dataset.set); }); });
   paint();
 })();
+
+// 記住語言選擇：按下導覽列的語言連結時存起來，首頁 <head> 會依此轉址。
+(function(){
+  [].forEach.call(document.querySelectorAll("a.lang"), function(a){
+    a.addEventListener("click", function(){
+      try{ localStorage.setItem("luk-lang", a.getAttribute("hreflang")==="en" ? "en" : "zh"); }catch(e){}
+    });
+  });
+})();
